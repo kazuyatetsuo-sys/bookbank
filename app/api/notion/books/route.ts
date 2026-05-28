@@ -1,0 +1,89 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/lib/session";
+import {
+  getNotionClient,
+  fetchBooks,
+  createBook,
+  updateBook,
+  archiveBook,
+  extractText,
+} from "@/lib/notion";
+
+const BOOKS_DB_ID = process.env.DEFAULT_BOOKS_DB_ID!;
+
+export async function GET() {
+  const session = await getSession();
+  if (!session.notionAccessToken) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const notion = getNotionClient(session.notionAccessToken);
+  const results = await fetchBooks(notion, BOOKS_DB_ID);
+
+  const books = results.map((page: unknown) => {
+    const p = page as { id: string; properties: Record<string, unknown> };
+    return {
+      id: p.id,
+      title: extractText(p.properties.Title),
+      author: extractText(p.properties.Author),
+      genre: extractText(p.properties.Genre),
+      bookId: extractText(p.properties.BookId),
+      coverUrl: extractText(p.properties.CoverUrl),
+      createdAt: extractText(p.properties.CreatedAt),
+    };
+  });
+
+  return NextResponse.json({ books });
+}
+
+export async function POST(req: NextRequest) {
+  const session = await getSession();
+  if (!session.notionAccessToken) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const notion = getNotionClient(session.notionAccessToken);
+  const body = await req.json();
+
+  const bookId = `book_${Date.now()}`;
+  await createBook(notion, BOOKS_DB_ID, {
+    title: body.title,
+    author: body.author ?? "",
+    genre: body.genre ?? "",
+    bookId,
+    coverUrl: body.coverUrl,
+  });
+
+  return NextResponse.json({ ok: true, bookId });
+}
+
+export async function PUT(req: NextRequest) {
+  const session = await getSession();
+  if (!session.notionAccessToken) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const notion = getNotionClient(session.notionAccessToken);
+  const body = await req.json();
+
+  if (body.archive) {
+    await archiveBook(notion, body.pageId);
+  } else {
+    await updateBook(notion, body.pageId, {
+      title: body.title,
+      author: body.author,
+      genre: body.genre,
+      coverUrl: body.coverUrl,
+    });
+
+    // 書籍タイトルが変わった場合、関連コンテンツのBookTitleも更新
+    if (body.title && body.bookId) {
+      const CONTENTS_DB_ID = process.env.DEFAULT_CONTENTS_DB_ID!;
+      const { fetchContents, updateContent } = await import("@/lib/notion");
+      const contents = await fetchContents(notion, CONTENTS_DB_ID, { bookId: body.bookId });
+      for (const page of contents) {
+        const p = page as { id: string };
+        await updateContent(notion, p.id, { bookTitle: body.title });
+      }
+    }
+  }
+
+  return NextResponse.json({ ok: true });
+}
