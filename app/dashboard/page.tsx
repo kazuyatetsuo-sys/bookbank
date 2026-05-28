@@ -14,7 +14,7 @@ export default function Dashboard() {
   const bank = useBookBank();
   const [tab, setTab] = useState<Tab>("history");
   const [showAdd, setShowAdd] = useState(false);
-  const [historyDetail, setHistoryDetail] = useState<ReturnType<typeof bank.history>[0] | null>(null);
+  const [historyDetail, setHistoryDetail] = useState<import("@/hooks/useBookBank").Content | null>(null);
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
     { id: "history", label: "履歴", icon: "🕐" },
