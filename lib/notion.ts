@@ -161,16 +161,11 @@ export async function updateContent(
   if (data.bookId !== undefined) properties.BookId = { rich_text: [{ text: { content: data.bookId } }] };
   if (data.bookTitle !== undefined) {
     properties.BookTitle = { rich_text: [{ text: { content: data.bookTitle } }] };
-  }
-  if (data.bookTitle !== undefined || data.chapter !== undefined || data.headline !== undefined) {
-    const bTitle = data.bookTitle ?? "";
     const ch = data.chapter ?? 0;
     const hl = data.headline ?? 0;
-    if (bTitle) {
-      properties.Title = {
-        title: [{ text: { content: `${bTitle} Ch.${String(ch).padStart(2, "0")} HL.${String(hl).padStart(2, "0")}` } }],
-      };
-    }
+    properties.Title = {
+      title: [{ text: { content: `${data.bookTitle} Ch.${String(ch).padStart(2, "0")} HL.${String(hl).padStart(2, "0")}` } }],
+    };
   }
   if (data.chapter !== undefined) properties.Chapter = { number: data.chapter };
   if (data.headline !== undefined) properties.Headline = { number: data.headline };

@@ -72,17 +72,6 @@ export async function PUT(req: NextRequest) {
       genre: body.genre,
       coverUrl: body.coverUrl,
     });
-
-    // 書籍タイトルが変わった場合、関連コンテンツのBookTitleも更新
-    if (body.title && body.bookId) {
-      const CONTENTS_DB_ID = process.env.DEFAULT_CONTENTS_DB_ID!;
-      const { fetchContents, updateContent } = await import("@/lib/notion");
-      const contents = await fetchContents(notion, CONTENTS_DB_ID, { bookId: body.bookId });
-      for (const page of contents) {
-        const p = page as { id: string };
-        await updateContent(notion, p.id, { bookTitle: body.title });
-      }
-    }
   }
 
   return NextResponse.json({ ok: true });

@@ -22,17 +22,17 @@ export default function DetailModal({ content, books, allContents, onClose, onEd
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 mb-2">
-          <div className="flex-1 min-w-0">
-            <p className="text-white text-base font-medium leading-relaxed">{content.contents}</p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs text-amber-400/70 mb-1">
+              {content.bookTitle} &nbsp;·&nbsp;
+              Ch.{String(content.chapter).padStart(2, "0")} &nbsp;·&nbsp;
+              HL.{String(content.headline).padStart(2, "0")}
+            </p>
+            <h2 className="text-white font-semibold text-lg leading-tight">{content.title}</h2>
           </div>
-          <button onClick={onClose} className="text-white/40 hover:text-white text-2xl leading-none flex-shrink-0 ml-2">×</button>
+          <button onClick={onClose} className="text-white/40 hover:text-white text-2xl leading-none flex-shrink-0">×</button>
         </div>
-        <p className="text-xs text-amber-400/70 mb-3">
-          {content.bookTitle} &nbsp;·&nbsp;
-          Ch.{String(content.chapter).padStart(2, "0")} &nbsp;·&nbsp;
-          HL.{String(content.headline).padStart(2, "0")}
-        </p>
 
         {/* Meta */}
         <div className="flex flex-wrap gap-2">
@@ -47,7 +47,13 @@ export default function DetailModal({ content, books, allContents, onClose, onEd
           ))}
         </div>
 
-
+        {/* Contents */}
+        {content.contents && (
+          <div>
+            <p className="text-xs text-white/40 mb-2">Contents</p>
+            <p className="text-white/80 text-sm leading-relaxed whitespace-pre-wrap bg-white/3 rounded-xl p-4">{content.contents}</p>
+          </div>
+        )}
 
         {/* Memo */}
         {content.memo && (

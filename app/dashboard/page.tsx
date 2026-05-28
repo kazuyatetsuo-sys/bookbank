@@ -15,7 +15,6 @@ export default function Dashboard() {
   const [tab, setTab] = useState<Tab>("history");
   const [showAdd, setShowAdd] = useState(false);
   const [historyDetail, setHistoryDetail] = useState<ReturnType<typeof bank.history>[0] | null>(null);
-  const [editingContent, setEditingContent] = useState<ReturnType<typeof bank.history>[0] | null>(null);
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
     { id: "history", label: "履歴", icon: "🕐" },
@@ -107,7 +106,6 @@ export default function Dashboard() {
           <BookList
             books={bank.books}
             genres={bank.genres}
-            contents={bank.contents}
             onAdd={bank.addBook}
             onUpdate={bank.updateBook}
             onDelete={bank.deleteBook}
@@ -199,19 +197,6 @@ export default function Dashboard() {
         />
       )}
 
-      {/* Edit Modal */}
-      {editingContent && (
-        <ContentModal
-          books={bank.books}
-          genres={bank.genres}
-          allContents={bank.contents}
-          editing={editingContent}
-          onClose={() => setEditingContent(null)}
-          onSave={async () => {}}
-          onUpdate={async (pageId, data) => { await bank.updateContent(pageId, data); setEditingContent(null); }}
-        />
-      )}
-
       {/* History Detail Modal */}
       {historyDetail && (
         <DetailModal
@@ -219,7 +204,7 @@ export default function Dashboard() {
           books={bank.books}
           allContents={bank.contents}
           onClose={() => setHistoryDetail(null)}
-          onEdit={() => { setEditingContent(historyDetail); setHistoryDetail(null); }}
+          onEdit={() => setHistoryDetail(null)}
           onArchive={() => { bank.archiveContent(historyDetail.id, !historyDetail.archived); setHistoryDetail(null); }}
         />
       )}
