@@ -13,26 +13,17 @@
   --amber-border: rgba(251,191,36,0.25);
 }
 
-.dark {
-  --bg: #080a0f;
-  --surface: rgba(255,255,255,0.03);
-  --border: rgba(255,255,255,0.08);
-  --text: #ffffff;
-  --text-muted: rgba(255,255,255,0.40);
-  --amber: #fbbf24;
-  --amber-bg: rgba(251,191,36,0.10);
-  --amber-border: rgba(251,191,36,0.25);
-}
-
-html:not(.dark) {
-  --bg: #f5f3ef;
-  --surface: rgba(0,0,0,0.04);
-  --border: rgba(0,0,0,0.08);
-  --text: #1a1a1a;
-  --text-muted: rgba(0,0,0,0.40);
-  --amber: #d97706;
-  --amber-bg: rgba(217,119,6,0.10);
-  --amber-border: rgba(217,119,6,0.25);
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f5f3ef;
+    --surface: rgba(0,0,0,0.04);
+    --border: rgba(0,0,0,0.08);
+    --text: #1a1a1a;
+    --text-muted: rgba(0,0,0,0.40);
+    --amber: #d97706;
+    --amber-bg: rgba(217,119,6,0.10);
+    --amber-border: rgba(217,119,6,0.25);
+  }
 }
 
 * { box-sizing: border-box; }
