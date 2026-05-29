@@ -1,10 +1,11 @@
 "use client";
 import { useState } from "react";
-import { Book } from "@/hooks/useBookBank";
+import { Book, Content } from "@/hooks/useBookBank";
 
 interface Props {
   books: Book[];
   genres: string[];
+  contents?: Content[];
   onAdd: (data: Omit<Book, "id" | "bookId" | "createdAt">) => Promise<void>;
   onUpdate: (pageId: string, data: Partial<Book>) => Promise<void>;
   onDelete: (pageId: string) => Promise<void>;
