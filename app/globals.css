@@ -1,1 +1,48 @@
-404: Not Found
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #f7f5f0;
+  --bg2: #ffffff;
+  --surface: rgba(0,0,0,0.03);
+  --border: rgba(0,0,0,0.08);
+  --text: #1a1a1a;
+  --text-muted: rgba(0,0,0,0.40);
+  --text-faint: rgba(0,0,0,0.20);
+  --amber: #b45309;
+  --amber-bg: rgba(180,83,9,0.08);
+  --amber-border: rgba(180,83,9,0.20);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d0f14;
+    --bg2: #141720;
+    --surface: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --text: #f0ece4;
+    --text-muted: rgba(240,236,228,0.45);
+    --text-faint: rgba(240,236,228,0.20);
+    --amber: #d97706;
+    --amber-bg: rgba(217,119,6,0.12);
+    --amber-border: rgba(217,119,6,0.25);
+  }
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.2); border-radius: 2px; }
+
+.line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
