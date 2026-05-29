@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
 
   const clientId = process.env.NOTION_CLIENT_ID!;
   const clientSecret = process.env.NOTION_CLIENT_SECRET!;
-  const redirectUri = process.env.NOTION_REDIRECT_URI!;
+  const redirectUri = process.env.NOTION_REDIRECT_URI || "https://bookbank-rho.vercel.app/api/notion/callback";
 
   const encoded = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
   const tokenRes = await fetch("https://api.notion.com/v1/oauth/token", {
