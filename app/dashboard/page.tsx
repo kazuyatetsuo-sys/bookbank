@@ -42,8 +42,8 @@ export default function Dashboard() {
   const p = (n: number) => String(n).padStart(2, "0");
 
   return (
-    <div className="min-h-screen bg-[#080a0f] text-white">
-      <header className="sticky top-0 z-40 bg-[#080a0f]/90 backdrop-blur border-b border-white/5 px-4 py-4">
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-40  backdrop-blur border-b border-white/5 px-4 py-4">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-amber-400 text-lg">📖</span>
@@ -53,7 +53,7 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <nav className="sticky top-[57px] z-30 bg-[#080a0f]/90 backdrop-blur border-b border-white/5 overflow-x-auto">
+      <nav className="sticky top-[57px] z-30  backdrop-blur border-b border-white/5 overflow-x-auto">
         <div className="max-w-2xl mx-auto flex">
           {tabs.map((t) => (
             <button
