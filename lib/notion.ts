@@ -26,7 +26,7 @@ export async function createBook(
     coverUrl?: string;
   }
 ) {
-  const properties: Record<string, unknown> = {
+  const properties: Parameters<typeof notion.pages.create>[0]["properties"] = {
     Title: { title: [{ text: { content: data.title } }] },
     Author: { rich_text: [{ text: { content: data.author } }] },
     BookId: { rich_text: [{ text: { content: data.bookId } }] },
@@ -47,7 +47,7 @@ export async function updateBook(
   pageId: string,
   data: { title?: string; author?: string; genre?: string; coverUrl?: string }
 ) {
-  const properties: Record<string, unknown> = {};
+  const properties: Parameters<typeof notion.pages.create>[0]["properties"] = {};
   if (data.title) properties.Title = { title: [{ text: { content: data.title } }] };
   if (data.author !== undefined) properties.Author = { rich_text: [{ text: { content: data.author } }] };
   if (data.genre) properties.Genre = { select: { name: data.genre } };
@@ -115,7 +115,7 @@ export async function createContent(
   }
 ) {
   const autoTitle = `${data.bookTitle} Ch.${String(data.chapter).padStart(2, "0")} HL.${String(data.headline).padStart(2, "0")}`;
-  const properties: Record<string, unknown> = {
+  const properties: Parameters<typeof notion.pages.create>[0]["properties"] = {
     Title: { title: [{ text: { content: autoTitle } }] },
     Contents: { rich_text: [{ text: { content: data.contents } }] },
     Memo: { rich_text: [{ text: { content: data.memo } }] },
@@ -153,7 +153,7 @@ export async function updateContent(
     relIds?: string;
   }
 ) {
-  const properties: Record<string, unknown> = {
+  const properties: Parameters<typeof notion.pages.create>[0]["properties"] = {
     UpdatedAt: { date: { start: new Date().toISOString() } },
   };
   if (data.contents !== undefined) properties.Contents = { rich_text: [{ text: { content: data.contents } }] };
@@ -217,7 +217,7 @@ export async function updateSort(
   pageId: string,
   data: { name?: string; conds?: string; order?: string }
 ) {
-  const properties: Record<string, unknown> = {};
+  const properties: Parameters<typeof notion.pages.create>[0]["properties"] = {};
   if (data.name) properties.Name = { title: [{ text: { content: data.name } }] };
   if (data.conds !== undefined) properties.Conds = { rich_text: [{ text: { content: data.conds } }] };
   if (data.order !== undefined) properties.Order = { rich_text: [{ text: { content: data.order } }] };
