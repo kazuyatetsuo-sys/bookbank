@@ -11,7 +11,21 @@ interface Props {
   onDelete: (pageId: string) => Promise<void>;
 }
 
-const emptyForm = { title: "", author: "", genre: "", coverUrl: "", isbn: "" };
+const emptyForm = { title: "", author: "", genre: "", coverUrl: "", isbn: "", memo: "", chapterTitles: "" };
+
+type ChapterEntry = { num: string; title: string };
+
+function parseChapterTitles(raw: string): ChapterEntry[] {
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+  } catch {}
+  return [];
+}
+
+function stringifyChapterTitles(entries: ChapterEntry[]): string {
+  return JSON.stringify(entries.filter(e => e.num || e.title));
+}
 
 async function fetchIsbn(isbn: string) {
   const c = isbn.replace(/[-\s]/g, "");
@@ -37,8 +51,10 @@ const overlay = "fixed inset-0 z-50 flex items-end sm:items-center justify-cente
 export default function BookList({ books, genres, contents = [], onAdd, onUpdate, onDelete }: Props) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ ...emptyForm });
+  const [chapters, setChapters] = useState<ChapterEntry[]>([]);
   const [editing, setEditing] = useState<Book | null>(null);
   const [editForm, setEditForm] = useState({ ...emptyForm });
+  const [editChapters, setEditChapters] = useState<ChapterEntry[]>([]);
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState<Book | null>(null);
   const [isbnLoading, setIsbnLoading] = useState(false);
@@ -55,18 +71,58 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
   const handleAdd = async () => {
     if (!form.title.trim()) return;
     setSaving(true);
-    await onAdd({ title: form.title, author: form.author, genre: form.genre, coverUrl: form.coverUrl });
-    setForm({ ...emptyForm }); setShowAdd(false); setSaving(false);
+    await onAdd({ title: form.title, author: form.author, genre: form.genre, coverUrl: form.coverUrl, memo: form.memo, chapterTitles: stringifyChapterTitles(chapters) });
+    setForm({ ...emptyForm }); setChapters([]); setShowAdd(false); setSaving(false);
   };
 
   const handleUpdate = async () => {
     if (!editing) return;
     setSaving(true);
-    await onUpdate(editing.id, { title: editForm.title, author: editForm.author, genre: editForm.genre, coverUrl: editForm.coverUrl });
+    await onUpdate(editing.id, { title: editForm.title, author: editForm.author, genre: editForm.genre, coverUrl: editForm.coverUrl, memo: editForm.memo, chapterTitles: stringifyChapterTitles(editChapters) });
     setEditing(null); setSaving(false);
   };
 
+  const startEdit = (b: Book) => {
+    setEditing(b);
+    setEditForm({ title: b.title, author: b.author, genre: b.genre, coverUrl: b.coverUrl, isbn: "", memo: b.memo || "", chapterTitles: b.chapterTitles || "" });
+    setEditChapters(parseChapterTitles(b.chapterTitles || ""));
+  };
+
+  const addChapter = (isEdit = false) => {
+    if (isEdit) setEditChapters(c => [...c, { num: String(c.length + 1), title: "" }]);
+    else setChapters(c => [...c, { num: String(c.length + 1), title: "" }]);
+  };
+
+  const removeChapter = (idx: number, isEdit = false) => {
+    if (isEdit) setEditChapters(c => c.filter((_, i) => i !== idx));
+    else setChapters(c => c.filter((_, i) => i !== idx));
+  };
+
+  const updateChapter = (idx: number, field: keyof ChapterEntry, value: string, isEdit = false) => {
+    if (isEdit) setEditChapters(c => c.map((e, i) => i === idx ? { ...e, [field]: value } : e));
+    else setChapters(c => c.map((e, i) => i === idx ? { ...e, [field]: value } : e));
+  };
+
   const p = (n: number) => String(n).padStart(2, "0");
+
+  const ChapterForm = ({ chs, isEdit }: { chs: ChapterEntry[]; isEdit: boolean }) => (
+    <div>
+      <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>目次（Chapter + タイトル）</p>
+      <div className="space-y-2">
+        {chs.map((ch, i) => (
+          <div key={i} className="flex gap-2 items-center">
+            <input className="w-12 rounded-lg p-2 text-sm border text-center focus:outline-none" style={inpStyle}
+              value={ch.num} onChange={e => updateChapter(i, "num", e.target.value, isEdit)} placeholder="1" />
+            <input className="flex-1 rounded-lg p-2 text-sm border focus:outline-none" style={inpStyle}
+              value={ch.title} onChange={e => updateChapter(i, "title", e.target.value, isEdit)} placeholder="チャプタータイトル" />
+            <button onClick={() => removeChapter(i, isEdit)} className="text-sm px-2" style={{ color: "var(--text-faint)" }}>×</button>
+          </div>
+        ))}
+      </div>
+      <button onClick={() => addChapter(isEdit)} className="mt-2 text-sm px-3 py-1.5 rounded-lg border"
+        style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>+ Chapterを追加</button>
+    </div>
+  );
 
   return (
     <div className="space-y-3">
@@ -93,10 +149,8 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
               {b.genre && <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}>{b.genre}</span>}
             </div>
             <div className="flex gap-3">
-              <button onClick={e => { e.stopPropagation(); setEditing(b); setEditForm({ title: b.title, author: b.author, genre: b.genre, coverUrl: b.coverUrl, isbn: "" }); }}
-                className="text-xs" style={{ color: "var(--text-muted)" }}>編集</button>
-              <button onClick={e => { e.stopPropagation(); onDelete(b.id); }}
-                className="text-xs hover:text-red-400" style={{ color: "var(--text-faint)" }}>削除</button>
+              <button onClick={e => { e.stopPropagation(); startEdit(b); }} className="text-xs" style={{ color: "var(--text-muted)" }}>編集</button>
+              <button onClick={e => { e.stopPropagation(); onDelete(b.id); }} className="text-xs hover:text-red-400" style={{ color: "var(--text-faint)" }}>削除</button>
             </div>
           </div>
         ))}
@@ -122,10 +176,21 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
                 <button onClick={() => setSelected(null)} className="text-xl" style={{ color: "var(--text-faint)" }}>×</button>
               </div>
 
+              {selected.memo && (
+                <div className="mb-4 p-3 rounded-xl border" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+                  <p className="text-xs mb-1" style={{ color: "var(--text-faint)" }}>📝 メモ</p>
+                  <p className="text-sm" style={{ color: "var(--text-muted)" }}>{selected.memo}</p>
+                </div>
+              )}
+
               {(() => {
                 const bc = contents.filter(c => !c.archived && c.bookId === selected.bookId)
                   .sort((a, b) => a.chapter - b.chapter || a.headline - b.headline);
                 const chs = [...new Set(bc.map(c => c.chapter))].sort((a, b) => a - b);
+                const chapterTitleMap: Record<string, string> = {};
+                parseChapterTitles(selected.chapterTitles || "").forEach(e => {
+                  chapterTitleMap[e.num] = e.title;
+                });
                 if (!bc.length) return <p className="text-sm text-center py-8" style={{ color: "var(--text-faint)" }}>コンテンツがありません</p>;
                 return (
                   <div className="space-y-1.5">
@@ -133,14 +198,15 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
                     {chs.map(ch => {
                       const chContents = bc.filter(c => c.chapter === ch);
                       const isOpen = openChapters[ch];
+                      const chTitle = chapterTitleMap[String(ch)] || "";
                       return (
                         <div key={ch}>
                           <button onClick={() => setOpenChapters(prev => ({ ...prev, [ch]: !prev[ch] }))}
-                            className="w-full flex items-center justify-between px-3 py-2 rounded-lg transition hover:opacity-70"
+                            className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition hover:opacity-70"
                             style={{ background: "var(--surface)" }}>
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-mono font-bold" style={{ color: "var(--amber)" }}>Ch.{p(ch)}</span>
-                              <span className="text-sm" style={{ color: "var(--text)" }}>Chapter {p(ch)}</span>
+                              <span className="text-sm" style={{ color: "var(--text)" }}>{chTitle || `Chapter ${p(ch)}`}</span>
                             </div>
                             <div className="flex items-center gap-2">
                               <span className="text-xs" style={{ color: "var(--text-faint)" }}>{chContents.length}件</span>
@@ -177,11 +243,11 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
       {/* Add Modal */}
       {showAdd && (
         <div className={overlay} style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={() => setShowAdd(false)}>
-          <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-5 space-y-3 border"
+          <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-5 space-y-3 border max-h-[90vh] overflow-y-auto"
             style={{ background: "var(--bg2)", borderColor: "var(--border)" }} onClick={e => e.stopPropagation()}>
             <h3 className="font-semibold" style={{ color: "var(--text)" }}>書籍を追加</h3>
             <div className="flex gap-2">
-              <input className={`flex-1 ${inp}`} style={inpStyle} placeholder="ISBN" value={form.isbn}
+              <input className={`flex-1 ${inp}`} style={inpStyle} placeholder="ISBN（13桁・表紙自動取得）" value={form.isbn}
                 onChange={e => setForm(f => ({ ...f, isbn: e.target.value }))}
                 onKeyDown={e => e.key === "Enter" && lookup(form.isbn)} />
               <button onClick={() => lookup(form.isbn)} disabled={isbnLoading || !form.isbn.trim()}
@@ -190,11 +256,12 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
                 {isbnLoading ? "…" : "取得"}
               </button>
             </div>
-            <div className="h-px" style={{ background: "var(--border)" }} />
             <input className={inp} style={inpStyle} placeholder="タイトル *" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
             <input className={inp} style={inpStyle} placeholder="著者" value={form.author} onChange={e => setForm(f => ({ ...f, author: e.target.value }))} />
+            <input className={inp} style={inpStyle} placeholder="表紙URL（ISBNがない場合）" value={form.coverUrl} onChange={e => setForm(f => ({ ...f, coverUrl: e.target.value }))} />
             <input className={inp} style={inpStyle} placeholder="ジャンル" value={form.genre} onChange={e => setForm(f => ({ ...f, genre: e.target.value }))} />
-            <input className={inp} style={inpStyle} placeholder="カバー画像URL" value={form.coverUrl} onChange={e => setForm(f => ({ ...f, coverUrl: e.target.value }))} />
+            <textarea className={`${inp} h-20 resize-none`} style={inpStyle} placeholder="書籍メモ" value={form.memo} onChange={e => setForm(f => ({ ...f, memo: e.target.value }))} />
+            <ChapterForm chs={chapters} isEdit={false} />
             {form.coverUrl && <div className="flex justify-center"><img src={form.coverUrl} alt="" className="h-20 object-cover rounded-lg" /></div>}
             <div className="flex gap-2 pt-1">
               <button onClick={() => setShowAdd(false)} className="flex-1 py-2.5 rounded-xl text-sm border"
@@ -210,7 +277,7 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
       {/* Edit Modal */}
       {editing && (
         <div className={overlay} style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={() => setEditing(null)}>
-          <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-5 space-y-3 border"
+          <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-5 space-y-3 border max-h-[90vh] overflow-y-auto"
             style={{ background: "var(--bg2)", borderColor: "var(--border)" }} onClick={e => e.stopPropagation()}>
             <h3 className="font-semibold" style={{ color: "var(--text)" }}>書籍を編集</h3>
             <div className="flex gap-2">
@@ -223,11 +290,12 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
                 {isbnLoading ? "…" : "取得"}
               </button>
             </div>
-            <div className="h-px" style={{ background: "var(--border)" }} />
             <input className={inp} style={inpStyle} placeholder="タイトル *" value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} />
             <input className={inp} style={inpStyle} placeholder="著者" value={editForm.author} onChange={e => setEditForm(f => ({ ...f, author: e.target.value }))} />
+            <input className={inp} style={inpStyle} placeholder="表紙URL" value={editForm.coverUrl} onChange={e => setEditForm(f => ({ ...f, coverUrl: e.target.value }))} />
             <input className={inp} style={inpStyle} placeholder="ジャンル" value={editForm.genre} onChange={e => setEditForm(f => ({ ...f, genre: e.target.value }))} />
-            <input className={inp} style={inpStyle} placeholder="カバー画像URL" value={editForm.coverUrl} onChange={e => setEditForm(f => ({ ...f, coverUrl: e.target.value }))} />
+            <textarea className={`${inp} h-20 resize-none`} style={inpStyle} placeholder="書籍メモ" value={editForm.memo} onChange={e => setEditForm(f => ({ ...f, memo: e.target.value }))} />
+            <ChapterForm chs={editChapters} isEdit={true} />
             {editForm.coverUrl && <div className="flex justify-center"><img src={editForm.coverUrl} alt="" className="h-20 object-cover rounded-lg" /></div>}
             <div className="flex gap-2 pt-1">
               <button onClick={() => setEditing(null)} className="flex-1 py-2.5 rounded-xl text-sm border"

@@ -8,6 +8,8 @@ export interface Book {
   genre: string;
   bookId: string;
   coverUrl: string;
+  memo: string;
+  chapterTitles: string;
   createdAt: string;
 }
 

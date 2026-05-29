@@ -28,6 +28,8 @@ export async function GET() {
       genre: extractText(p.properties.Genre),
       bookId: extractText(p.properties.BookId),
       coverUrl: extractText(p.properties.CoverUrl),
+      memo: extractText(p.properties.Memo),
+      chapterTitles: extractText(p.properties.ChapterTitles),
       createdAt: extractText(p.properties.CreatedAt),
     };
   });
@@ -50,6 +52,8 @@ export async function POST(req: NextRequest) {
     genre: body.genre ?? "",
     bookId,
     coverUrl: body.coverUrl,
+    memo: body.memo ?? "",
+    chapterTitles: body.chapterTitles ?? "",
   });
 
   return NextResponse.json({ ok: true, bookId });
@@ -71,6 +75,8 @@ export async function PUT(req: NextRequest) {
       author: body.author,
       genre: body.genre,
       coverUrl: body.coverUrl,
+    memo: body.memo ?? "",
+    chapterTitles: body.chapterTitles ?? "",
     });
   }
 
