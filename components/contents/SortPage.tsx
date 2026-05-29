@@ -26,7 +26,7 @@ export default function SortPage({ sorts, contents, books, genres, onAddSort, on
   const [activeSort, setActiveSort] = useState<Sort | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [newSortName, setNewSortName] = useState("");
-  const [conds, setConds] = useState<SortConds>({});
+  const [conds, setConds] = useState<Record<string, unknown>>({});
   const [detail, setDetail] = useState<Content | null>(null);
   const [editing, setEditing] = useState<Content | null>(null);
 
