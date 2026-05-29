@@ -108,15 +108,15 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">{editing ? "編集" : "新規コンテンツ"}</h2>
-          <button onClick={onClose} className="text-white/40 hover:text-white text-2xl leading-none">×</button>
+          <h2 className="text-lg font-semibold">{editing ? "編集" : "新規コンテンツ"}</h2>
+          <button onClick={onClose} className="text-2xl leading-none">×</button>
         </div>
 
         {/* Contents */}
         <div>
-          <label className="text-xs text-white/50 mb-1 block">Contents</label>
+          <label className="text-xs mb-1 block">Contents</label>
           <textarea
-            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm resize-none focus:outline-none focus:border-amber-400/50 h-32"
+            className="w-full rounded-xl p-3 text-sm border resize-none focus:outline-none focus:border-amber-400/50 h-32"
             placeholder="本文を入力…"
             value={form.contents}
             onChange={(e) => setForm((f) => ({ ...f, contents: e.target.value }))}
@@ -125,9 +125,9 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
 
         {/* Memo */}
         <div>
-          <label className="text-xs text-white/50 mb-1 block">メモ</label>
+          <label className="text-xs mb-1 block">メモ</label>
           <textarea
-            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm resize-none focus:outline-none focus:border-amber-400/50 h-20"
+            className="w-full rounded-xl p-3 text-sm border resize-none focus:outline-none focus:border-amber-400/50 h-20"
             placeholder="メモを入力…"
             value={form.memo}
             onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))}
@@ -136,9 +136,9 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
 
         {/* Book / Chapter / Headline */}
         <div className="space-y-3">
-          <label className="text-xs text-white/50 block">書籍 / チャプター / ヘッドライン</label>
+          <label className="text-xs block">書籍 / チャプター / ヘッドライン</label>
           <select
-            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-amber-400/50"
+            className="w-full rounded-xl p-3 text-sm border focus:outline-none focus:border-amber-400/50"
             value={form.bookId}
             onChange={(e) => handleBookChange(e.target.value)}
           >
@@ -149,23 +149,23 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
           </select>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-white/40 mb-1 block">Chapter</label>
+              <label className="text-xs mb-1 block">Chapter</label>
               <input
                 type="number"
                 min={0}
                 max={99}
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-amber-400/50"
+                className="w-full rounded-xl p-3 text-sm border focus:outline-none focus:border-amber-400/50"
                 value={form.chapter}
                 onChange={(e) => setForm((f) => ({ ...f, chapter: Number(e.target.value) }))}
               />
             </div>
             <div>
-              <label className="text-xs text-white/40 mb-1 block">Headline</label>
+              <label className="text-xs mb-1 block">Headline</label>
               <input
                 type="number"
                 min={0}
                 max={99}
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-amber-400/50"
+                className="w-full rounded-xl p-3 text-sm border focus:outline-none focus:border-amber-400/50"
                 value={form.headline}
                 onChange={(e) => setForm((f) => ({ ...f, headline: Number(e.target.value) }))}
               />
@@ -175,9 +175,9 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
 
         {/* Genre */}
         <div>
-          <label className="text-xs text-white/50 mb-1 block">ジャンル</label>
+          <label className="text-xs mb-1 block">ジャンル</label>
           <select
-            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-amber-400/50"
+            className="w-full rounded-xl p-3 text-sm border focus:outline-none focus:border-amber-400/50"
             value={form.genre}
             onChange={(e) => setForm((f) => ({ ...f, genre: e.target.value }))}
           >
@@ -190,9 +190,9 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
 
         {/* Author */}
         <div>
-          <label className="text-xs text-white/50 mb-1 block">著者</label>
+          <label className="text-xs mb-1 block">著者</label>
           <input
-            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-amber-400/50"
+            className="w-full rounded-xl p-3 text-sm border focus:outline-none focus:border-amber-400/50"
             placeholder="著者名…"
             value={form.author}
             onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))}
@@ -201,10 +201,10 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
 
         {/* Tags */}
         <div>
-          <label className="text-xs text-white/50 mb-1 block">タグ</label>
+          <label className="text-xs mb-1 block">タグ</label>
           <div className="flex gap-2">
             <input
-              className="flex-1 bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-amber-400/50"
+              className="flex-1 rounded-xl p-3 text-sm border focus:outline-none focus:border-amber-400/50"
               placeholder="タグを追加…"
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
@@ -226,9 +226,9 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
 
         {/* Related Items */}
         <div>
-          <label className="text-xs text-white/50 mb-1 block">関連アイテム</label>
+          <label className="text-xs mb-1 block">関連アイテム</label>
           <input
-            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-amber-400/50 mb-2"
+            className="w-full rounded-xl p-3 text-sm border focus:outline-none focus:border-amber-400/50 mb-2"
             placeholder="検索…"
             value={relSearch}
             onChange={(e) => setRelSearch(e.target.value)}
@@ -238,7 +238,7 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
               <button
                 key={c.id}
                 onClick={() => toggleRel(c.id)}
-                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${relIdList.includes(c.id) ? "bg-amber-400/20 text-amber-400 border border-amber-400/30" : "bg-white/5 text-white/60 hover:bg-white/10"}`}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${relIdList.includes(c.id) ? "bg-amber-400/20 text-amber-400 border border-amber-400/30" : "bg-white/5 "}`}
               >
                 {c.title}
               </button>
