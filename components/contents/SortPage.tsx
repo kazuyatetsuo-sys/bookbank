@@ -26,7 +26,7 @@ export default function SortPage({ sorts, contents, books, genres, onAddSort, on
   const [activeSort, setActiveSort] = useState<Sort | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [newSortName, setNewSortName] = useState("");
-  const [conds, setConds] = useState<Record<string, unknown>>({});
+  const [conds, setConds] = useState<SortConds>({});
   const [detail, setDetail] = useState<Content | null>(null);
   const [editing, setEditing] = useState<Content | null>(null);
 
@@ -53,7 +53,7 @@ export default function SortPage({ sorts, contents, books, genres, onAddSort, on
 
   const handleSaveSort = async () => {
     if (!newSortName.trim()) return;
-    await onAddSort({ name: newSortName, conds });
+    await onAddSort({ name: newSortName, conds: conds as Record<string, unknown> });
     setNewSortName("");
     setConds({});
     setShowCreate(false);
