@@ -11,15 +11,10 @@ interface Props {
   onDelete: (pageId: string) => Promise<void>;
 }
 
-const emptyForm = { title: "", author: "", genre: "", coverUrl: "", isbn: "", memo: "", chapterTitles: "" };
-
 type ChapterEntry = { num: string; title: string };
 
 function parseChapterTitles(raw: string): ChapterEntry[] {
-  try {
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) return parsed;
-  } catch {}
+  try { const p = JSON.parse(raw); if (Array.isArray(p)) return p; } catch {}
   return [];
 }
 
@@ -47,6 +42,7 @@ async function fetchIsbn(isbn: string) {
 const inp = "w-full rounded-xl p-3 text-sm border focus:outline-none";
 const inpStyle = { background: "var(--surface)", borderColor: "var(--border)", color: "var(--text)" };
 const overlay = "fixed inset-0 z-50 flex items-end sm:items-center justify-center";
+const emptyForm = { title: "", author: "", genre: "", coverUrl: "", isbn: "", memo: "" };
 
 export default function BookList({ books, genres, contents = [], onAdd, onUpdate, onDelete }: Props) {
   const [showAdd, setShowAdd] = useState(false);
@@ -84,45 +80,11 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
 
   const startEdit = (b: Book) => {
     setEditing(b);
-    setEditForm({ title: b.title, author: b.author, genre: b.genre, coverUrl: b.coverUrl, isbn: "", memo: b.memo || "", chapterTitles: b.chapterTitles || "" });
+    setEditForm({ title: b.title, author: b.author, genre: b.genre, coverUrl: b.coverUrl, isbn: "", memo: b.memo || "" });
     setEditChapters(parseChapterTitles(b.chapterTitles || ""));
   };
 
-  const addChapter = (isEdit = false) => {
-    if (isEdit) setEditChapters(c => [...c, { num: String(c.length + 1), title: "" }]);
-    else setChapters(c => [...c, { num: String(c.length + 1), title: "" }]);
-  };
-
-  const removeChapter = (idx: number, isEdit = false) => {
-    if (isEdit) setEditChapters(c => c.filter((_, i) => i !== idx));
-    else setChapters(c => c.filter((_, i) => i !== idx));
-  };
-
-  const updateChapter = (idx: number, field: keyof ChapterEntry, value: string, isEdit = false) => {
-    if (isEdit) setEditChapters(c => c.map((e, i) => i === idx ? { ...e, [field]: value } : e));
-    else setChapters(c => c.map((e, i) => i === idx ? { ...e, [field]: value } : e));
-  };
-
   const p = (n: number) => String(n).padStart(2, "0");
-
-  const ChapterForm = ({ chs, isEdit }: { chs: ChapterEntry[]; isEdit: boolean }) => (
-    <div>
-      <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>目次（Chapter + タイトル）</p>
-      <div className="space-y-2">
-        {chs.map((ch, i) => (
-          <div key={i} className="flex gap-2 items-center">
-            <input className="w-12 rounded-lg p-2 text-sm border text-center focus:outline-none" style={inpStyle}
-              value={ch.num} onChange={e => updateChapter(i, "num", e.target.value, isEdit)} placeholder="1" />
-            <input className="flex-1 rounded-lg p-2 text-sm border focus:outline-none" style={inpStyle}
-              value={ch.title} onChange={e => updateChapter(i, "title", e.target.value, isEdit)} placeholder="チャプタータイトル" />
-            <button onClick={() => removeChapter(i, isEdit)} className="text-sm px-2" style={{ color: "var(--text-faint)" }}>×</button>
-          </div>
-        ))}
-      </div>
-      <button onClick={() => addChapter(isEdit)} className="mt-2 text-sm px-3 py-1.5 rounded-lg border"
-        style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>+ Chapterを追加</button>
-    </div>
-  );
 
   return (
     <div className="space-y-3">
@@ -188,9 +150,7 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
                   .sort((a, b) => a.chapter - b.chapter || a.headline - b.headline);
                 const chs = [...new Set(bc.map(c => c.chapter))].sort((a, b) => a - b);
                 const chapterTitleMap: Record<string, string> = {};
-                parseChapterTitles(selected.chapterTitles || "").forEach(e => {
-                  chapterTitleMap[e.num] = e.title;
-                });
+                parseChapterTitles(selected.chapterTitles || "").forEach(e => { chapterTitleMap[e.num] = e.title; });
                 if (!bc.length) return <p className="text-sm text-center py-8" style={{ color: "var(--text-faint)" }}>コンテンツがありません</p>;
                 return (
                   <div className="space-y-1.5">
@@ -261,7 +221,23 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
             <input className={inp} style={inpStyle} placeholder="表紙URL（ISBNがない場合）" value={form.coverUrl} onChange={e => setForm(f => ({ ...f, coverUrl: e.target.value }))} />
             <input className={inp} style={inpStyle} placeholder="ジャンル" value={form.genre} onChange={e => setForm(f => ({ ...f, genre: e.target.value }))} />
             <textarea className={`${inp} h-20 resize-none`} style={inpStyle} placeholder="書籍メモ" value={form.memo} onChange={e => setForm(f => ({ ...f, memo: e.target.value }))} />
-            <ChapterForm chs={chapters} isEdit={false} />
+            <div>
+              <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>目次（Chapter + タイトル）</p>
+              <div className="space-y-2">
+                {chapters.map((ch, i) => (
+                  <div key={i} className="flex gap-2 items-center">
+                    <input className="w-12 rounded-lg p-2 text-sm border text-center focus:outline-none" style={inpStyle}
+                      value={ch.num} onChange={e => setChapters(c => c.map((x, j) => j === i ? { ...x, num: e.target.value } : x))} placeholder="1" />
+                    <input className="flex-1 rounded-lg p-2 text-sm border focus:outline-none" style={inpStyle}
+                      value={ch.title} onChange={e => setChapters(c => c.map((x, j) => j === i ? { ...x, title: e.target.value } : x))} placeholder="チャプタータイトル" />
+                    <button onClick={() => setChapters(c => c.filter((_, j) => j !== i))} className="text-sm px-2" style={{ color: "var(--text-faint)" }}>×</button>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => setChapters(c => [...c, { num: String(c.length + 1), title: "" }])}
+                className="mt-2 text-sm px-3 py-1.5 rounded-lg border"
+                style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>+ Chapterを追加</button>
+            </div>
             {form.coverUrl && <div className="flex justify-center"><img src={form.coverUrl} alt="" className="h-20 object-cover rounded-lg" /></div>}
             <div className="flex gap-2 pt-1">
               <button onClick={() => setShowAdd(false)} className="flex-1 py-2.5 rounded-xl text-sm border"
@@ -295,7 +271,23 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
             <input className={inp} style={inpStyle} placeholder="表紙URL" value={editForm.coverUrl} onChange={e => setEditForm(f => ({ ...f, coverUrl: e.target.value }))} />
             <input className={inp} style={inpStyle} placeholder="ジャンル" value={editForm.genre} onChange={e => setEditForm(f => ({ ...f, genre: e.target.value }))} />
             <textarea className={`${inp} h-20 resize-none`} style={inpStyle} placeholder="書籍メモ" value={editForm.memo} onChange={e => setEditForm(f => ({ ...f, memo: e.target.value }))} />
-            <ChapterForm chs={editChapters} isEdit={true} />
+            <div>
+              <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>目次（Chapter + タイトル）</p>
+              <div className="space-y-2">
+                {editChapters.map((ch, i) => (
+                  <div key={i} className="flex gap-2 items-center">
+                    <input className="w-12 rounded-lg p-2 text-sm border text-center focus:outline-none" style={inpStyle}
+                      value={ch.num} onChange={e => setEditChapters(c => c.map((x, j) => j === i ? { ...x, num: e.target.value } : x))} placeholder="1" />
+                    <input className="flex-1 rounded-lg p-2 text-sm border focus:outline-none" style={inpStyle}
+                      value={ch.title} onChange={e => setEditChapters(c => c.map((x, j) => j === i ? { ...x, title: e.target.value } : x))} placeholder="チャプタータイトル" />
+                    <button onClick={() => setEditChapters(c => c.filter((_, j) => j !== i))} className="text-sm px-2" style={{ color: "var(--text-faint)" }}>×</button>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => setEditChapters(c => [...c, { num: String(c.length + 1), title: "" }])}
+                className="mt-2 text-sm px-3 py-1.5 rounded-lg border"
+                style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>+ Chapterを追加</button>
+            </div>
             {editForm.coverUrl && <div className="flex justify-center"><img src={editForm.coverUrl} alt="" className="h-20 object-cover rounded-lg" /></div>}
             <div className="flex gap-2 pt-1">
               <button onClick={() => setEditing(null)} className="flex-1 py-2.5 rounded-xl text-sm border"
