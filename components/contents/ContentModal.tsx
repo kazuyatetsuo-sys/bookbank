@@ -13,17 +13,12 @@ interface Props {
 }
 
 const emptyForm = {
-  contents: "",
-  memo: "",
-  bookId: "",
-  bookTitle: "",
-  chapter: 0,
-  headline: 0,
-  genre: "",
-  author: "",
-  tags: [] as string[],
-  relIds: "",
+  contents: "", memo: "", bookId: "", bookTitle: "",
+  chapter: 0, headline: 0, genre: "", author: "", tags: [] as string[], relIds: "",
 };
+
+const inp = "w-full rounded-xl p-3 text-sm border focus:outline-none";
+const inpStyle = { background: "var(--surface)", borderColor: "var(--border)", color: "var(--text)" };
 
 export default function ContentModal({ books, genres, allContents, editing, onClose, onSave, onUpdate }: Props) {
   const [form, setForm] = useState({ ...emptyForm });
@@ -34,45 +29,24 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
   useEffect(() => {
     if (editing) {
       setForm({
-        contents: editing.contents,
-        memo: editing.memo,
-        bookId: editing.bookId,
-        bookTitle: editing.bookTitle,
-        chapter: editing.chapter,
-        headline: editing.headline,
-        genre: editing.genre,
-        author: editing.author,
-        tags: editing.tags,
-        relIds: editing.relIds,
+        contents: editing.contents, memo: editing.memo, bookId: editing.bookId,
+        bookTitle: editing.bookTitle, chapter: editing.chapter, headline: editing.headline,
+        genre: editing.genre, author: editing.author, tags: editing.tags, relIds: editing.relIds,
       });
     } else {
       setForm({ ...emptyForm });
     }
   }, [editing]);
 
-  const selectedBook = books.find((b) => b.bookId === form.bookId);
-
   const handleBookChange = (bookId: string) => {
     const book = books.find((b) => b.bookId === bookId);
-    setForm((f) => ({
-      ...f,
-      bookId,
-      bookTitle: book?.title ?? "",
-      genre: book?.genre ?? f.genre,
-      author: book?.author ?? f.author,
-    }));
+    setForm((f) => ({ ...f, bookId, bookTitle: book?.title ?? "", genre: book?.genre ?? f.genre, author: book?.author ?? f.author }));
   };
 
   const addTag = () => {
     const t = tagInput.trim();
-    if (t && !form.tags.includes(t)) {
-      setForm((f) => ({ ...f, tags: [...f.tags, t] }));
-    }
+    if (t && !form.tags.includes(t)) setForm((f) => ({ ...f, tags: [...f.tags, t] }));
     setTagInput("");
-  };
-
-  const removeTag = (tag: string) => {
-    setForm((f) => ({ ...f, tags: f.tags.filter((t) => t !== tag) }));
   };
 
   const toggleRel = (id: string) => {
@@ -90,11 +64,8 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
   const handleSave = async () => {
     setSaving(true);
     try {
-      if (editing && onUpdate) {
-        await onUpdate(editing.id, form);
-      } else {
-        await onSave(form);
-      }
+      if (editing && onUpdate) await onUpdate(editing.id, form);
+      else await onSave(form);
       onClose();
     } finally {
       setSaving(false);
@@ -102,163 +73,108 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={onClose}>
-      <div
-        className="relative w-full sm:max-w-2xl border rounded-t-3xl sm:rounded-2xl overflow-y-auto max-h-[90vh] p-6 space-y-5" style={{ background: "var(--bg2)", borderColor: "var(--border)" }}
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+      style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={onClose}>
+      <div className="relative w-full sm:max-w-2xl border rounded-t-3xl sm:rounded-2xl overflow-y-auto max-h-[90vh] p-6 space-y-5"
+        style={{ background: "var(--bg2)", borderColor: "var(--border)" }} onClick={(e) => e.stopPropagation()}>
+
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{editing ? "編集" : "新規コンテンツ"}</h2>
-          <button onClick={onClose} className="text-2xl leading-none">×</button>
+          <h2 className="text-lg font-semibold" style={{ color: "var(--text)" }}>{editing ? "編集" : "新規コンテンツ"}</h2>
+          <button onClick={onClose} className="text-2xl leading-none" style={{ color: "var(--text-muted)" }}>×</button>
         </div>
 
-        {/* Contents */}
         <div>
-          <label className="text-xs mb-1 block">Contents</label>
-          <textarea
-            className="w-full rounded-xl p-3 text-sm border resize-none focus:outline-none focus:border-amber-400/50 h-32"
-            placeholder="本文を入力…"
-            value={form.contents}
-            onChange={(e) => setForm((f) => ({ ...f, contents: e.target.value }))}
-          />
+          <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>Contents</label>
+          <textarea className={`${inp} resize-none h-32`} style={inpStyle} placeholder="本文を入力…"
+            value={form.contents} onChange={(e) => setForm((f) => ({ ...f, contents: e.target.value }))} />
         </div>
 
-        {/* Memo */}
         <div>
-          <label className="text-xs mb-1 block">メモ</label>
-          <textarea
-            className="w-full rounded-xl p-3 text-sm border resize-none focus:outline-none focus:border-amber-400/50 h-20"
-            placeholder="メモを入力…"
-            value={form.memo}
-            onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))}
-          />
+          <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>メモ</label>
+          <textarea className={`${inp} resize-none h-20`} style={inpStyle} placeholder="メモを入力…"
+            value={form.memo} onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))} />
         </div>
 
-        {/* Book / Chapter / Headline */}
         <div className="space-y-3">
-          <label className="text-xs block">書籍 / チャプター / ヘッドライン</label>
-          <select
-            className="w-full rounded-xl p-3 text-sm border focus:outline-none focus:border-amber-400/50"
-            value={form.bookId}
-            onChange={(e) => handleBookChange(e.target.value)}
-          >
+          <label className="text-xs block" style={{ color: "var(--text-muted)" }}>書籍 / チャプター / ヘッドライン</label>
+          <select className={inp} style={inpStyle} value={form.bookId} onChange={(e) => handleBookChange(e.target.value)}>
             <option value="">書籍を選択…</option>
-            {books.map((b) => (
-              <option key={b.bookId} value={b.bookId}>{b.title}</option>
-            ))}
+            {books.map((b) => <option key={b.bookId} value={b.bookId}>{b.title}</option>)}
           </select>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs mb-1 block">Chapter</label>
-              <input
-                type="number"
-                min={0}
-                max={99}
-                className="w-full rounded-xl p-3 text-sm border focus:outline-none focus:border-amber-400/50"
-                value={form.chapter}
-                onChange={(e) => setForm((f) => ({ ...f, chapter: Number(e.target.value) }))}
-              />
+              <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>Chapter</label>
+              <input type="number" min={0} max={99} className={inp} style={inpStyle}
+                value={form.chapter} onChange={(e) => setForm((f) => ({ ...f, chapter: Number(e.target.value) }))} />
             </div>
             <div>
-              <label className="text-xs mb-1 block">Headline</label>
-              <input
-                type="number"
-                min={0}
-                max={99}
-                className="w-full rounded-xl p-3 text-sm border focus:outline-none focus:border-amber-400/50"
-                value={form.headline}
-                onChange={(e) => setForm((f) => ({ ...f, headline: Number(e.target.value) }))}
-              />
+              <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>Headline</label>
+              <input type="number" min={0} max={99} className={inp} style={inpStyle}
+                value={form.headline} onChange={(e) => setForm((f) => ({ ...f, headline: Number(e.target.value) }))} />
             </div>
           </div>
         </div>
 
-        {/* Genre */}
         <div>
-          <label className="text-xs mb-1 block">ジャンル</label>
-          <select
-            className="w-full rounded-xl p-3 text-sm border focus:outline-none focus:border-amber-400/50"
-            value={form.genre}
-            onChange={(e) => setForm((f) => ({ ...f, genre: e.target.value }))}
-          >
+          <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>ジャンル</label>
+          <select className={inp} style={inpStyle} value={form.genre} onChange={(e) => setForm((f) => ({ ...f, genre: e.target.value }))}>
             <option value="">選択…</option>
-            {genres.map((g) => (
-              <option key={g} value={g}>{g}</option>
-            ))}
+            {genres.map((g) => <option key={g} value={g}>{g}</option>)}
           </select>
         </div>
 
-        {/* Author */}
         <div>
-          <label className="text-xs mb-1 block">著者</label>
-          <input
-            className="w-full rounded-xl p-3 text-sm border focus:outline-none focus:border-amber-400/50"
-            placeholder="著者名…"
-            value={form.author}
-            onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))}
-          />
+          <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>著者</label>
+          <input className={inp} style={inpStyle} placeholder="著者名…"
+            value={form.author} onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))} />
         </div>
 
-        {/* Tags */}
         <div>
-          <label className="text-xs mb-1 block">タグ</label>
+          <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>タグ</label>
           <div className="flex gap-2">
-            <input
-              className="flex-1 rounded-xl p-3 text-sm border focus:outline-none focus:border-amber-400/50"
-              placeholder="タグを追加…"
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTag())}
-            />
-            <button onClick={addTag} className="px-4 bg-amber-400/20 border border-amber-400/30 text-amber-400 rounded-xl text-sm hover:bg-amber-400/30 transition">追加</button>
+            <input className={`flex-1 ${inp}`} style={inpStyle} placeholder="タグを追加…"
+              value={tagInput} onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTag())} />
+            <button onClick={addTag} className="px-4 rounded-xl text-sm border"
+              style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>追加</button>
           </div>
           {form.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">
               {form.tags.map((t) => (
-                <span key={t} className="flex items-center gap-1 px-3 py-1 bg-amber-400/10 border border-amber-400/20 text-amber-400 rounded-full text-xs">
+                <span key={t} className="flex items-center gap-1 px-3 py-1 rounded-full text-xs border"
+                  style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>
                   {t}
-                  <button onClick={() => removeTag(t)} className="hover:text-white leading-none">×</button>
+                  <button onClick={() => setForm((f) => ({ ...f, tags: f.tags.filter((x) => x !== t) }))} className="leading-none">×</button>
                 </span>
               ))}
             </div>
           )}
         </div>
 
-        {/* Related Items */}
         <div>
-          <label className="text-xs mb-1 block">関連アイテム</label>
-          <input
-            className="w-full rounded-xl p-3 text-sm border focus:outline-none focus:border-amber-400/50 mb-2"
-            placeholder="検索…"
-            value={relSearch}
-            onChange={(e) => setRelSearch(e.target.value)}
-          />
+          <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>関連アイテム</label>
+          <input className={`${inp} mb-2`} style={inpStyle} placeholder="検索…"
+            value={relSearch} onChange={(e) => setRelSearch(e.target.value)} />
           <div className="space-y-1 max-h-40 overflow-y-auto">
             {relCandidates.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => toggleRel(c.id)}
-                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${relIdList.includes(c.id) ? "bg-amber-400/20 text-amber-400 border border-amber-400/30" : "bg-white/5 "}`}
-              >
+              <button key={c.id} onClick={() => toggleRel(c.id)}
+                className="w-full text-left px-3 py-2 rounded-lg text-sm transition border"
+                style={relIdList.includes(c.id)
+                  ? { background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }
+                  : { background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}>
                 {c.title}
               </button>
             ))}
           </div>
-          {relIdList.length > 0 && (
-            <p className="text-xs text-amber-400/70 mt-1">{relIdList.length}件選択中</p>
-          )}
+          {relIdList.length > 0 && <p className="text-xs mt-1" style={{ color: "var(--amber)" }}>{relIdList.length}件選択中</p>}
         </div>
 
-        {/* Actions */}
         <div className="flex gap-3 pt-2">
-          <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-white/10 text-white/60 hover:bg-white/5 transition text-sm">
-            キャンセル
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex-1 py-3 rounded-xl bg-amber-400 text-black font-semibold hover:bg-amber-300 transition text-sm disabled:opacity-50"
-          >
+          <button onClick={onClose} className="flex-1 py-3 rounded-xl text-sm border"
+            style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>キャンセル</button>
+          <button onClick={handleSave} disabled={saving}
+            className="flex-1 py-3 rounded-xl font-semibold text-sm disabled:opacity-50"
+            style={{ background: "var(--amber)", color: "#fff" }}>
             {saving ? "保存中…" : "保存"}
           </button>
         </div>
