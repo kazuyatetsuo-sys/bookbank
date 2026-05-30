@@ -109,13 +109,9 @@ export default function SettingsPage({ contents, books, genres, onArchive, onUpd
           onUpdate={async (pageId, data) => { await onUpdate(pageId, data); setEditing(null); }}
         />
       <div className="mt-8 pt-6 border-t" style={{ borderColor: "var(--border)" }}>
-        <button onClick={() => { if (confirm("ログアウトしますか？")) window.location.href = "/api/auth/logout"; }}
-          className="w-full py-3 rounded-xl text-sm border"
-          style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>
-          ログアウト
-        </button>
+        <button onClick={() => { if (confirm("ログアウトしますか？")) window.location.href = "/api/auth/logout"; }} className="w-full py-3 rounded-xl text-sm border" style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>ログアウト</button>
       </div>
-      )}
+
     </div>
   );
 }
