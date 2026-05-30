@@ -26,6 +26,14 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
   const [saving, setSaving] = useState(false);
   const [relSearch, setRelSearch] = useState("");
 
+  // 全タグ一覧を収集
+  const allTags = [...new Set(allContents.flatMap(c => c.tags))].sort();
+
+  // サジェスト: tagInputに一致する既存タグ（未選択のもの）
+  const tagSuggestions = tagInput.trim()
+    ? allTags.filter(t => t.includes(tagInput.trim()) && !form.tags.includes(t))
+    : [];
+
   useEffect(() => {
     if (editing) {
       setForm({
@@ -43,8 +51,8 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
     setForm((f) => ({ ...f, bookId, bookTitle: book?.title ?? "", genre: book?.genre ?? f.genre, author: book?.author ?? f.author }));
   };
 
-  const addTag = () => {
-    const t = tagInput.trim();
+  const addTag = (tag?: string) => {
+    const t = (tag ?? tagInput).trim();
     if (t && !form.tags.includes(t)) setForm((f) => ({ ...f, tags: [...f.tags, t] }));
     setTagInput("");
   };
@@ -129,15 +137,29 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
             value={form.author} onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))} />
         </div>
 
+        {/* Tags */}
         <div>
           <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>タグ</label>
           <div className="flex gap-2">
-            <input className={`flex-1 ${inp}`} style={inpStyle} placeholder="タグを追加…"
+            <input className={`flex-1 ${inp}`} style={inpStyle} placeholder="タグを入力…"
               value={tagInput} onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTag())} />
-            <button onClick={addTag} className="px-4 rounded-xl text-sm border"
+            <button onClick={() => addTag()} className="px-4 rounded-xl text-sm border"
               style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>追加</button>
           </div>
+          {/* サジェスト */}
+          {tagSuggestions.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {tagSuggestions.slice(0, 8).map(t => (
+                <button key={t} onClick={() => addTag(t)}
+                  className="px-2.5 py-1 rounded-full text-xs border transition hover:opacity-70"
+                  style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}>
+                  + {t}
+                </button>
+              ))}
+            </div>
+          )}
+          {/* 選択済みタグ */}
           {form.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">
               {form.tags.map((t) => (
