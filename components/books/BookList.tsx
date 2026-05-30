@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Book, Content } from "@/hooks/useBookBank";
 
 interface Props {
@@ -43,6 +43,49 @@ const inp = "w-full rounded-xl p-3 text-sm border focus:outline-none";
 const inpStyle = { background: "var(--surface)", borderColor: "var(--border)", color: "var(--text)" };
 const overlay = "fixed inset-0 z-50 flex items-end sm:items-center justify-center";
 const emptyForm = { title: "", author: "", genre: "", coverUrl: "", isbn: "", memo: "" };
+
+function ChapterList({ chapters, onChange }: { chapters: ChapterEntry[]; onChange: (c: ChapterEntry[]) => void }) {
+  const dragIdx = useRef<number | null>(null);
+  const dragOverIdx = useRef<number | null>(null);
+
+  const handleDragStart = (i: number) => { dragIdx.current = i; };
+  const handleDragOver = (e: React.DragEvent, i: number) => { e.preventDefault(); dragOverIdx.current = i; };
+  const handleDrop = () => {
+    if (dragIdx.current === null || dragOverIdx.current === null) return;
+    const next = [...chapters];
+    const [moved] = next.splice(dragIdx.current, 1);
+    next.splice(dragOverIdx.current, 0, moved);
+    onChange(next);
+    dragIdx.current = null;
+    dragOverIdx.current = null;
+  };
+
+  return (
+    <div>
+      <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>目次（ドラッグで並び替え）</p>
+      <div className="space-y-2">
+        {chapters.map((ch, i) => (
+          <div key={i} className="flex gap-2 items-center rounded-lg px-2 py-1 cursor-grab border"
+            style={{ background: "var(--surface)", borderColor: "var(--border)" }}
+            draggable
+            onDragStart={() => handleDragStart(i)}
+            onDragOver={(e) => handleDragOver(e, i)}
+            onDrop={handleDrop}>
+            <span className="text-xs cursor-grab" style={{ color: "var(--text-faint)" }}>⠿</span>
+            <input className="w-10 rounded-lg p-2 text-sm border text-center focus:outline-none" style={inpStyle}
+              value={ch.num} onChange={e => onChange(chapters.map((x, j) => j === i ? { ...x, num: e.target.value } : x))} placeholder="1" />
+            <input className="flex-1 rounded-lg p-2 text-sm border focus:outline-none" style={inpStyle}
+              value={ch.title} onChange={e => onChange(chapters.map((x, j) => j === i ? { ...x, title: e.target.value } : x))} placeholder="チャプタータイトル" />
+            <button onClick={() => onChange(chapters.filter((_, j) => j !== i))} className="text-sm px-2" style={{ color: "var(--text-faint)" }}>×</button>
+          </div>
+        ))}
+      </div>
+      <button onClick={() => onChange([...chapters, { num: String(chapters.length + 1), title: "" }])}
+        className="mt-2 text-sm px-3 py-1.5 rounded-lg border"
+        style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>+ Chapterを追加</button>
+    </div>
+  );
+}
 
 export default function BookList({ books, genres, contents = [], onAdd, onUpdate, onDelete }: Props) {
   const [showAdd, setShowAdd] = useState(false);
@@ -221,23 +264,7 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
             <input className={inp} style={inpStyle} placeholder="表紙URL（ISBNがない場合）" value={form.coverUrl} onChange={e => setForm(f => ({ ...f, coverUrl: e.target.value }))} />
             <input className={inp} style={inpStyle} placeholder="ジャンル" value={form.genre} onChange={e => setForm(f => ({ ...f, genre: e.target.value }))} />
             <textarea className={`${inp} h-20 resize-none`} style={inpStyle} placeholder="書籍メモ" value={form.memo} onChange={e => setForm(f => ({ ...f, memo: e.target.value }))} />
-            <div>
-              <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>目次（Chapter + タイトル）</p>
-              <div className="space-y-2">
-                {chapters.map((ch, i) => (
-                  <div key={i} className="flex gap-2 items-center">
-                    <input className="w-12 rounded-lg p-2 text-sm border text-center focus:outline-none" style={inpStyle}
-                      value={ch.num} onChange={e => setChapters(c => c.map((x, j) => j === i ? { ...x, num: e.target.value } : x))} placeholder="1" />
-                    <input className="flex-1 rounded-lg p-2 text-sm border focus:outline-none" style={inpStyle}
-                      value={ch.title} onChange={e => setChapters(c => c.map((x, j) => j === i ? { ...x, title: e.target.value } : x))} placeholder="チャプタータイトル" />
-                    <button onClick={() => setChapters(c => c.filter((_, j) => j !== i))} className="text-sm px-2" style={{ color: "var(--text-faint)" }}>×</button>
-                  </div>
-                ))}
-              </div>
-              <button onClick={() => setChapters(c => [...c, { num: String(c.length + 1), title: "" }])}
-                className="mt-2 text-sm px-3 py-1.5 rounded-lg border"
-                style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>+ Chapterを追加</button>
-            </div>
+            <ChapterList chapters={chapters} onChange={setChapters} />
             {form.coverUrl && <div className="flex justify-center"><img src={form.coverUrl} alt="" className="h-20 object-cover rounded-lg" /></div>}
             <div className="flex gap-2 pt-1">
               <button onClick={() => setShowAdd(false)} className="flex-1 py-2.5 rounded-xl text-sm border"
@@ -271,23 +298,7 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
             <input className={inp} style={inpStyle} placeholder="表紙URL" value={editForm.coverUrl} onChange={e => setEditForm(f => ({ ...f, coverUrl: e.target.value }))} />
             <input className={inp} style={inpStyle} placeholder="ジャンル" value={editForm.genre} onChange={e => setEditForm(f => ({ ...f, genre: e.target.value }))} />
             <textarea className={`${inp} h-20 resize-none`} style={inpStyle} placeholder="書籍メモ" value={editForm.memo} onChange={e => setEditForm(f => ({ ...f, memo: e.target.value }))} />
-            <div>
-              <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>目次（Chapter + タイトル）</p>
-              <div className="space-y-2">
-                {editChapters.map((ch, i) => (
-                  <div key={i} className="flex gap-2 items-center">
-                    <input className="w-12 rounded-lg p-2 text-sm border text-center focus:outline-none" style={inpStyle}
-                      value={ch.num} onChange={e => setEditChapters(c => c.map((x, j) => j === i ? { ...x, num: e.target.value } : x))} placeholder="1" />
-                    <input className="flex-1 rounded-lg p-2 text-sm border focus:outline-none" style={inpStyle}
-                      value={ch.title} onChange={e => setEditChapters(c => c.map((x, j) => j === i ? { ...x, title: e.target.value } : x))} placeholder="チャプタータイトル" />
-                    <button onClick={() => setEditChapters(c => c.filter((_, j) => j !== i))} className="text-sm px-2" style={{ color: "var(--text-faint)" }}>×</button>
-                  </div>
-                ))}
-              </div>
-              <button onClick={() => setEditChapters(c => [...c, { num: String(c.length + 1), title: "" }])}
-                className="mt-2 text-sm px-3 py-1.5 rounded-lg border"
-                style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>+ Chapterを追加</button>
-            </div>
+            <ChapterList chapters={editChapters} onChange={setEditChapters} />
             {editForm.coverUrl && <div className="flex justify-center"><img src={editForm.coverUrl} alt="" className="h-20 object-cover rounded-lg" /></div>}
             <div className="flex gap-2 pt-1">
               <button onClick={() => setEditing(null)} className="flex-1 py-2.5 rounded-xl text-sm border"
