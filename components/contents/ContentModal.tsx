@@ -81,9 +81,9 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+    <div className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={onClose}>
-      <div className="relative w-full sm:max-w-2xl border rounded-t-3xl sm:rounded-2xl overflow-y-auto max-h-[90vh] p-6 space-y-5"
+      <div className="relative w-full sm:max-w-2xl border rounded-2xl overflow-y-auto max-h-[90vh] p-6 space-y-5"
         style={{ background: "var(--bg2)", borderColor: "var(--border)" }} onClick={(e) => e.stopPropagation()}>
 
         <div className="flex items-center justify-between">

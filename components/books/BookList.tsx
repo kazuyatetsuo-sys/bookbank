@@ -41,7 +41,7 @@ async function fetchIsbn(isbn: string) {
 
 const inp = "w-full rounded-xl p-3 text-sm border focus:outline-none";
 const inpStyle = { background: "var(--surface)", borderColor: "var(--border)", color: "var(--text)" };
-const overlay = "fixed inset-0 z-50 flex items-end sm:items-center justify-center";
+const overlay = "fixed inset-0 z-50 flex items-center justify-center";
 const emptyForm = { title: "", author: "", genre: "", coverUrl: "", isbn: "", memo: "" };
 
 function ChapterList({ chapters, onChange }: { chapters: ChapterEntry[]; onChange: (c: ChapterEntry[]) => void }) {
@@ -165,7 +165,7 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
       {/* Book Detail with TOC */}
       {selected && (
         <div className={overlay} style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={() => setSelected(null)}>
-          <div className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl max-h-[90vh] overflow-y-auto border"
+          <div className="w-full sm:max-w-lg rounded-2xl max-h-[90vh] overflow-y-auto border"
             style={{ background: "var(--bg2)", borderColor: "var(--border)" }} onClick={e => e.stopPropagation()}>
             <div className="p-5">
               <div className="flex items-start gap-3 mb-5">
@@ -246,7 +246,7 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
       {/* Add Modal */}
       {showAdd && (
         <div className={overlay} style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={() => setShowAdd(false)}>
-          <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-5 space-y-3 border max-h-[90vh] overflow-y-auto"
+          <div className="w-full sm:max-w-md rounded-2xl p-5 space-y-3 border max-h-[90vh] overflow-y-auto"
             style={{ background: "var(--bg2)", borderColor: "var(--border)" }} onClick={e => e.stopPropagation()}>
             <h3 className="font-semibold" style={{ color: "var(--text)" }}>書籍を追加</h3>
             <div className="flex gap-2">
@@ -280,7 +280,7 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
       {/* Edit Modal */}
       {editing && (
         <div className={overlay} style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={() => setEditing(null)}>
-          <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-5 space-y-3 border max-h-[90vh] overflow-y-auto"
+          <div className="w-full sm:max-w-md rounded-2xl p-5 space-y-3 border max-h-[90vh] overflow-y-auto"
             style={{ background: "var(--bg2)", borderColor: "var(--border)" }} onClick={e => e.stopPropagation()}>
             <h3 className="font-semibold" style={{ color: "var(--text)" }}>書籍を編集</h3>
             <div className="flex gap-2">

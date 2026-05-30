@@ -22,9 +22,9 @@ export default function DetailModal({ content, books, allContents, onClose, onEd
     : [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+    <div className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={onClose}>
-      <div className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl overflow-y-auto max-h-[90vh] border"
+      <div className="w-full sm:max-w-lg rounded-2xl overflow-y-auto max-h-[90vh] border"
         style={{ background: "var(--bg2)", borderColor: "var(--border)", color: "var(--text)" }}
         onClick={e => e.stopPropagation()}>
 
