@@ -22,15 +22,6 @@ function stringifyChapterTitles(entries: ChapterEntry[]): string {
   return JSON.stringify(entries.filter(e => e.num || e.title));
 }
 
-async function toIsbn13(isbn: string): string {
-  const c = isbn.replace(/[-\s]/g, "");
-  if (c.length === 13) return c;
-  const base = "978" + c.slice(0, 9);
-  const sum = base.split("").reduce((acc, d, i) => acc + Number(d) * (i % 2 === 0 ? 1 : 3), 0);
-  const check = (10 - (sum % 10)) % 10;
-  return base + check;
-}
-
 function toIsbn13(isbn: string): string {
   const c = isbn.replace(/[-\s]/g, "");
   if (c.length === 13) return c;
