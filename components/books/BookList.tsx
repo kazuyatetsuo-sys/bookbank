@@ -22,19 +22,41 @@ function stringifyChapterTitles(entries: ChapterEntry[]): string {
   return JSON.stringify(entries.filter(e => e.num || e.title));
 }
 
-async function fetchIsbn(isbn: string) {
+async function toIsbn13(isbn: string): string {
   const c = isbn.replace(/[-\s]/g, "");
-  try {
-    const res = await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${c}&format=json&jscmd=data`);
-    const data = await res.json();
-    const b = data[`ISBN:${c}`];
-    if (b) return { title: b.title, author: b.authors?.[0]?.name, coverUrl: b.cover?.large || `https://covers.openlibrary.org/b/isbn/${c}-L.jpg` };
-  } catch {}
+  if (c.length === 13) return c;
+  const base = "978" + c.slice(0, 9);
+  const sum = base.split("").reduce((acc, d, i) => acc + Number(d) * (i % 2 === 0 ? 1 : 3), 0);
+  const check = (10 - (sum % 10)) % 10;
+  return base + check;
+}
+
+function toIsbn13(isbn: string): string {
+  const c = isbn.replace(/[-\s]/g, "");
+  if (c.length === 13) return c;
+  const base = "978" + c.slice(0, 9);
+  const sum = base.split("").reduce((acc, d, i) => acc + Number(d) * (i % 2 === 0 ? 1 : 3), 0);
+  const check = (10 - (sum % 10)) % 10;
+  return base + String(check);
+}
+
+async function fetchIsbn(isbn: string) {
+  const c = toIsbn13(isbn.replace(/[-\s]/g, ""));
   try {
     const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${c}`);
     const data = await res.json();
     const item = data.items?.[0]?.volumeInfo;
-    if (item) return { title: item.title, author: item.authors?.[0], coverUrl: item.imageLinks?.thumbnail?.replace("http://", "https://") };
+    if (item) return {
+      title: item.title,
+      author: item.authors?.[0],
+      coverUrl: item.imageLinks?.thumbnail?.replace("http://", "https://") || item.imageLinks?.smallThumbnail?.replace("http://", "https://"),
+    };
+  } catch {}
+  try {
+    const res = await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${c}&format=json&jscmd=data`);
+    const data = await res.json();
+    const b = data[`ISBN:${c}`];
+    if (b) return { title: b.title, author: b.authors?.[0]?.name, coverUrl: b.cover?.large || b.cover?.medium || `https://covers.openlibrary.org/b/isbn/${c}-L.jpg` };
   } catch {}
   return {};
 }
