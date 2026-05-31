@@ -11,7 +11,7 @@ type Tab = "history" | "books" | "random" | "sortlist" | "sort";
 
 export default function Dashboard() {
   const bank = useBookBank();
-  const [tab, setTab] = useState<Tab>("history");
+  const [tab, setTab] = useState<Tab>("random");
   const [showAdd, setShowAdd] = useState(false);
   const [historyDetail, setHistoryDetail] = useState<Content | null>(null);
   const [editingContent, setEditingContent] = useState<Content | null>(null);
