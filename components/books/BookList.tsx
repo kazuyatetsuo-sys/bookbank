@@ -9,6 +9,9 @@ interface Props {
   onAdd: (data: Omit<Book, "id" | "bookId" | "createdAt">) => Promise<void>;
   onUpdate: (pageId: string, data: Partial<Book>) => Promise<void>;
   onDelete: (pageId: string) => Promise<void>;
+  onUpdateContent?: (pageId: string, data: Partial<Content>) => Promise<void>;
+  onArchiveContent?: (pageId: string, archived: boolean) => Promise<void>;
+  allContents?: Content[];
 }
 
 type ChapterEntry = { num: string; title: string };
