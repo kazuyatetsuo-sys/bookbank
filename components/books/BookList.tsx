@@ -37,11 +37,7 @@ async function fetchIsbn(isbn: string) {
     const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${c}`);
     const data = await res.json();
     const item = data.items?.[0]?.volumeInfo;
-    if (item) return {
-      title: item.title,
-      author: item.authors?.[0],
-      coverUrl: item.imageLinks?.thumbnail?.replace("http://", "https://") || item.imageLinks?.smallThumbnail?.replace("http://", "https://"),
-    };
+    if (item) return { title: item.title, author: item.authors?.[0], coverUrl: item.imageLinks?.thumbnail?.replace("http://", "https://") || item.imageLinks?.smallThumbnail?.replace("http://", "https://") };
   } catch {}
   try {
     const res = await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${c}&format=json&jscmd=data`);
@@ -70,7 +66,6 @@ function ChapterList({ chapters, onChange }: { chapters: ChapterEntry[]; onChang
     [next[i], next[i + 1]] = [next[i + 1], next[i]];
     onChange(next);
   };
-
   return (
     <div>
       <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>目次</p>
@@ -79,8 +74,8 @@ function ChapterList({ chapters, onChange }: { chapters: ChapterEntry[]; onChang
           <div key={i} className="flex gap-2 items-center rounded-lg px-2 py-1 border"
             style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
             <div className="flex flex-col gap-0.5">
-              <button onClick={() => moveUp(i)} className="text-xs leading-none px-1" style={{ color: "var(--text-faint)" }} disabled={i === 0}>▲</button>
-              <button onClick={() => moveDown(i)} className="text-xs leading-none px-1" style={{ color: "var(--text-faint)" }} disabled={i === chapters.length - 1}>▼</button>
+              <button onClick={() => moveUp(i)} disabled={i === 0} className="text-xs leading-none px-1 disabled:opacity-30" style={{ color: "var(--text-faint)" }}>▲</button>
+              <button onClick={() => moveDown(i)} disabled={i === chapters.length - 1} className="text-xs leading-none px-1 disabled:opacity-30" style={{ color: "var(--text-faint)" }}>▼</button>
             </div>
             <input className="w-10 rounded-lg p-2 text-sm border text-center focus:outline-none" style={inpStyle}
               value={ch.num} onChange={e => onChange(chapters.map((x, j) => j === i ? { ...x, num: e.target.value } : x))} placeholder="1" />
@@ -139,9 +134,32 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
   };
 
   const p = (n: number) => String(n).padStart(2, "0");
+  const allGenres = [...new Set(books.map(b => b.genre || "未分類"))].sort();
+  const displayBooks = selectedGenre
+    ? books.filter(b => (b.genre || "未分類") === selectedGenre)
+    : [...books].sort(() => Math.random() - 0.5);
+
+  const BookCard = ({ b }: { b: Book }) => (
+    <div onClick={() => { setSelected(b); setOpenChapters({}); }}
+      className="flex gap-3 items-center px-4 py-3 rounded-xl border cursor-pointer transition hover:opacity-80"
+      style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
+      {b.coverUrl
+        ? <img src={b.coverUrl} alt="" className="w-10 h-14 object-cover rounded-lg flex-shrink-0" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+        : <div className="w-10 h-14 rounded-lg flex-shrink-0 flex items-center justify-center text-lg" style={{ background: "var(--amber-bg)", color: "var(--amber)" }}>📖</div>
+      }
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate" style={{ color: "var(--text)" }}>{b.title}</p>
+        {b.author && <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{b.author}</p>}
+      </div>
+      <div className="flex gap-3">
+        <button onClick={e => { e.stopPropagation(); startEdit(b); }} className="text-xs" style={{ color: "var(--text-muted)" }}>編集</button>
+        <button onClick={e => { e.stopPropagation(); onDelete(b.id); }} className="text-xs hover:text-red-400" style={{ color: "var(--text-faint)" }}>削除</button>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex justify-between items-center">
         <p className="text-xs" style={{ color: "var(--text-faint)" }}>{books.length}冊</p>
         <button onClick={() => setShowAdd(true)} className="px-3 py-1.5 rounded-lg text-sm border"
@@ -150,33 +168,37 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
         </button>
       </div>
 
-      <div className="space-y-2">
-        {books.map(b => (
-          <div key={b.id} onClick={() => { setSelected(b); setOpenChapters({}); }}
-            className="flex gap-3 items-center px-4 py-3 rounded-xl border cursor-pointer transition hover:opacity-80"
-            style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
-            {b.coverUrl
-              ? <img src={b.coverUrl} alt="" className="w-10 h-14 object-cover rounded-lg flex-shrink-0" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-              : <div className="w-10 h-14 rounded-lg flex-shrink-0 flex items-center justify-center text-lg" style={{ background: "var(--amber-bg)", color: "var(--amber)" }}>📖</div>
-            }
-            <div className="flex-1 min-w-0">
-              {b.genre && <span className="inline-block mb-1 px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{b.genre}</span>}
-              <p className="text-sm font-medium truncate" style={{ color: "var(--text)" }}>{b.title}</p>
-              {b.author && <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{b.author}</p>}
-            </div>
-            <div className="flex gap-3">
-              <button onClick={e => { e.stopPropagation(); startEdit(b); }} className="text-xs" style={{ color: "var(--text-muted)" }}>編集</button>
-              <button onClick={e => { e.stopPropagation(); onDelete(b.id); }} className="text-xs hover:text-red-400" style={{ color: "var(--text-faint)" }}>削除</button>
-            </div>
-          </div>
+      {/* ジャンルチップ */}
+      <div className="flex gap-2 flex-wrap">
+        <button onClick={() => setSelectedGenre(null)}
+          className="px-3 py-1 rounded-full text-xs border transition"
+          style={!selectedGenre
+            ? { background: "var(--amber)", borderColor: "var(--amber)", color: "#fff" }
+            : { background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}>
+          すべて
+        </button>
+        {allGenres.map(g => (
+          <button key={g} onClick={() => setSelectedGenre(g === selectedGenre ? null : g)}
+            className="px-3 py-1 rounded-full text-xs border transition"
+            style={selectedGenre === g
+              ? { background: "var(--amber)", borderColor: "var(--amber)", color: "#fff" }
+              : { background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}>
+            {g}
+          </button>
         ))}
+      </div>
+
+      {/* 書籍一覧 */}
+      <div className="space-y-2">
+        {!selectedGenre && <p className="text-xs" style={{ color: "var(--text-faint)" }}>ランダム表示</p>}
+        {displayBooks.map(b => <BookCard key={b.id} b={b} />)}
         {books.length === 0 && <p className="text-center py-12 text-sm" style={{ color: "var(--text-faint)" }}>書籍が登録されていません</p>}
       </div>
 
       {/* Book Detail with TOC */}
       {selected && (
         <div className={overlay} style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={() => setSelected(null)}>
-          <div className="w-full sm:max-w-lg rounded-2xl max-h-[90vh] overflow-y-auto border"
+          <div className="w-full sm:max-w-lg rounded-2xl max-h-[90vh] overflow-y-auto border m-4"
             style={{ background: "var(--bg2)", borderColor: "var(--border)" }} onClick={e => e.stopPropagation()}>
             <div className="p-5">
               <div className="flex items-start gap-3 mb-5">
@@ -187,7 +209,7 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
                 <div className="flex-1">
                   <h2 className="font-semibold text-base leading-tight" style={{ color: "var(--text)" }}>{selected.title}</h2>
                   {selected.author && <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>{selected.author}</p>}
-                  {selected.genre && <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}>{selected.genre}</span>}
+                  {selected.genre && <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{selected.genre}</span>}
                 </div>
                 <button onClick={() => setSelected(null)} className="text-xl" style={{ color: "var(--text-faint)" }}>×</button>
               </div>
@@ -257,7 +279,7 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
       {/* Add Modal */}
       {showAdd && (
         <div className={overlay} style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={() => setShowAdd(false)}>
-          <div className="w-full sm:max-w-md rounded-2xl p-5 space-y-3 border max-h-[90vh] overflow-y-auto"
+          <div className="w-full sm:max-w-md rounded-2xl p-5 space-y-3 border max-h-[90vh] overflow-y-auto m-4"
             style={{ background: "var(--bg2)", borderColor: "var(--border)" }} onClick={e => e.stopPropagation()}>
             <h3 className="font-semibold" style={{ color: "var(--text)" }}>書籍を追加</h3>
             <div className="flex gap-2">
@@ -272,7 +294,7 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
             </div>
             <input className={inp} style={inpStyle} placeholder="タイトル *" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
             <input className={inp} style={inpStyle} placeholder="著者" value={form.author} onChange={e => setForm(f => ({ ...f, author: e.target.value }))} />
-            <input className={inp} style={inpStyle} placeholder="表紙URL（ISBNがない場合）" value={form.coverUrl} onChange={e => setForm(f => ({ ...f, coverUrl: e.target.value }))} />
+            <input className={inp} style={inpStyle} placeholder="表紙URL" value={form.coverUrl} onChange={e => setForm(f => ({ ...f, coverUrl: e.target.value }))} />
             <input className={inp} style={inpStyle} placeholder="ジャンル" value={form.genre} onChange={e => setForm(f => ({ ...f, genre: e.target.value }))} />
             <textarea className={`${inp} h-20 resize-none`} style={inpStyle} placeholder="書籍メモ" value={form.memo} onChange={e => setForm(f => ({ ...f, memo: e.target.value }))} />
             <ChapterList chapters={chapters} onChange={setChapters} />
@@ -291,7 +313,7 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
       {/* Edit Modal */}
       {editing && (
         <div className={overlay} style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={() => setEditing(null)}>
-          <div className="w-full sm:max-w-md rounded-2xl p-5 space-y-3 border max-h-[90vh] overflow-y-auto"
+          <div className="w-full sm:max-w-md rounded-2xl p-5 space-y-3 border max-h-[90vh] overflow-y-auto m-4"
             style={{ background: "var(--bg2)", borderColor: "var(--border)" }} onClick={e => e.stopPropagation()}>
             <h3 className="font-semibold" style={{ color: "var(--text)" }}>書籍を編集</h3>
             <div className="flex gap-2">
