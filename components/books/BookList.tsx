@@ -58,33 +58,30 @@ const overlay = "fixed inset-0 z-50 flex items-center justify-center";
 const emptyForm = { title: "", author: "", genre: "", coverUrl: "", isbn: "", memo: "" };
 
 function ChapterList({ chapters, onChange }: { chapters: ChapterEntry[]; onChange: (c: ChapterEntry[]) => void }) {
-  const dragIdx = useRef<number | null>(null);
-  const dragOverIdx = useRef<number | null>(null);
-
-  const handleDragStart = (i: number) => { dragIdx.current = i; };
-  const handleDragOver = (e: React.DragEvent, i: number) => { e.preventDefault(); dragOverIdx.current = i; };
-  const handleDrop = () => {
-    if (dragIdx.current === null || dragOverIdx.current === null) return;
+  const moveUp = (i: number) => {
+    if (i === 0) return;
     const next = [...chapters];
-    const [moved] = next.splice(dragIdx.current, 1);
-    next.splice(dragOverIdx.current, 0, moved);
+    [next[i - 1], next[i]] = [next[i], next[i - 1]];
     onChange(next);
-    dragIdx.current = null;
-    dragOverIdx.current = null;
+  };
+  const moveDown = (i: number) => {
+    if (i === chapters.length - 1) return;
+    const next = [...chapters];
+    [next[i], next[i + 1]] = [next[i + 1], next[i]];
+    onChange(next);
   };
 
   return (
     <div>
-      <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>目次（ドラッグで並び替え）</p>
+      <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>目次</p>
       <div className="space-y-2">
         {chapters.map((ch, i) => (
-          <div key={i} className="flex gap-2 items-center rounded-lg px-2 py-1 cursor-grab border"
-            style={{ background: "var(--surface)", borderColor: "var(--border)" }}
-            draggable
-            onDragStart={() => handleDragStart(i)}
-            onDragOver={(e) => handleDragOver(e, i)}
-            onDrop={handleDrop}>
-            <span className="text-xs cursor-grab" style={{ color: "var(--text-faint)" }}>⠿</span>
+          <div key={i} className="flex gap-2 items-center rounded-lg px-2 py-1 border"
+            style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+            <div className="flex flex-col gap-0.5">
+              <button onClick={() => moveUp(i)} className="text-xs leading-none px-1" style={{ color: "var(--text-faint)" }} disabled={i === 0}>▲</button>
+              <button onClick={() => moveDown(i)} className="text-xs leading-none px-1" style={{ color: "var(--text-faint)" }} disabled={i === chapters.length - 1}>▼</button>
+            </div>
             <input className="w-10 rounded-lg p-2 text-sm border text-center focus:outline-none" style={inpStyle}
               value={ch.num} onChange={e => onChange(chapters.map((x, j) => j === i ? { ...x, num: e.target.value } : x))} placeholder="1" />
             <input className="flex-1 rounded-lg p-2 text-sm border focus:outline-none" style={inpStyle}
@@ -162,9 +159,9 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
               : <div className="w-10 h-14 rounded-lg flex-shrink-0 flex items-center justify-center text-lg" style={{ background: "var(--amber-bg)", color: "var(--amber)" }}>📖</div>
             }
             <div className="flex-1 min-w-0">
+              {b.genre && <span className="inline-block mb-1 px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{b.genre}</span>}
               <p className="text-sm font-medium truncate" style={{ color: "var(--text)" }}>{b.title}</p>
               {b.author && <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{b.author}</p>}
-              {b.genre && <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}>{b.genre}</span>}
             </div>
             <div className="flex gap-3">
               <button onClick={e => { e.stopPropagation(); startEdit(b); }} className="text-xs" style={{ color: "var(--text-muted)" }}>編集</button>

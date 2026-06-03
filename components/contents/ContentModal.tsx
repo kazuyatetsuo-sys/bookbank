@@ -184,7 +184,7 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
                 style={relIdList.includes(c.id)
                   ? { background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }
                   : { background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}>
-                {c.title}
+                {c.contents.slice(0, 60)}
               </button>
             ))}
           </div>
