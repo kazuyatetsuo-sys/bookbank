@@ -109,7 +109,7 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
             <option value="">書籍を選択…</option>
             {books.map((b) => <option key={b.bookId} value={b.bookId}>{b.title}</option>)}
           </select>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>Chapter</label>
               <input type="number" min={0} max={99} className={inp} style={inpStyle}
@@ -119,6 +119,11 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
               <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>Headline</label>
               <input type="number" min={0} max={99} className={inp} style={inpStyle}
                 value={form.headline} onChange={(e) => setForm((f) => ({ ...f, headline: Number(e.target.value) }))} />
+            </div>
+            <div>
+              <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>Order</label>
+              <input type="number" min={0} max={99} className={inp} style={inpStyle}
+                value={form.order} onChange={(e) => setForm((f) => ({ ...f, order: Number(e.target.value) }))} />
             </div>
           </div>
         </div>
