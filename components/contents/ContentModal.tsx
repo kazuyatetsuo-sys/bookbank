@@ -123,7 +123,7 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
             <div>
               <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>Order</label>
               <input type="number" min={0} max={99} className={inp} style={inpStyle}
-                value={form.order} onChange={(e) => setForm((f) => ({ ...f, order: Number(e.target.value) }))} />
+                value={String(form.order).padStart(2, "0")} onChange={(e) => setForm((f) => ({ ...f, order: Number(e.target.value) }))} />
             </div>
           </div>
         </div>
