@@ -211,7 +211,12 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
                   {selected.author && <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>{selected.author}</p>}
                   {selected.genre && <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{selected.genre}</span>}
                 </div>
+                <div className="flex gap-2">
+                <button onClick={() => setShowAddContent(true)}
+                  className="px-3 py-1.5 rounded-lg text-xs border"
+                  style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>+ 追加</button>
                 <button onClick={() => setSelected(null)} className="text-xl" style={{ color: "var(--text-faint)" }}>×</button>
+              </div>
               </div>
 
               {selected.memo && (
