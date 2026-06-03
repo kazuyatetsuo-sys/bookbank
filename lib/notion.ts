@@ -113,6 +113,7 @@ export async function createContent(
     bookTitle: string;
     chapter: number;
     headline: number;
+  order?: number;
     genre: string;
     author: string;
     tags: string[];
@@ -129,6 +130,7 @@ export async function createContent(
     BookTitle: { rich_text: [{ text: { content: data.bookTitle } }] },
     Chapter: { number: data.chapter },
     Headline: { number: data.headline },
+    Order: { number: data.order ?? 0 },
     Author: { rich_text: [{ text: { content: data.author } }] },
     Tags: { multi_select: data.tags.map((t) => ({ name: t })) },
     RelIds: { rich_text: [{ text: { content: data.relIds } }] },
@@ -175,6 +177,7 @@ export async function updateContent(
   }
   if (data.chapter !== undefined) properties.Chapter = { number: data.chapter };
   if (data.headline !== undefined) properties.Headline = { number: data.headline };
+  if (data.order !== undefined) properties.Order = { number: data.order };
   if (data.genre !== undefined) properties.Genre = { select: data.genre ? { name: data.genre } : null };
   if (data.author !== undefined) properties.Author = { rich_text: [{ text: { content: data.author } }] };
   if (data.tags !== undefined) properties.Tags = { multi_select: data.tags.map((t) => ({ name: t })) };

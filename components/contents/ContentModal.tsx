@@ -14,7 +14,7 @@ interface Props {
 
 const emptyForm = {
   contents: "", memo: "", bookId: "", bookTitle: "",
-  chapter: 0, headline: 0, genre: "", author: "", tags: [] as string[], relIds: "",
+  chapter: 0, headline: 0, order: 0, genre: "", author: "", tags: [] as string[], relIds: "",
 };
 
 const inp = "w-full rounded-xl p-3 text-sm border focus:outline-none";
@@ -38,7 +38,7 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
     if (editing) {
       setForm({
         contents: editing.contents, memo: editing.memo, bookId: editing.bookId,
-        bookTitle: editing.bookTitle, chapter: editing.chapter, headline: editing.headline,
+        bookTitle: editing.bookTitle, chapter: editing.chapter, headline: editing.headline, order: editing.order ?? 0,
         genre: editing.genre, author: editing.author, tags: editing.tags, relIds: editing.relIds,
       });
     } else {

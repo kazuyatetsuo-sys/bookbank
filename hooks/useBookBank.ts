@@ -18,7 +18,7 @@ export interface Content {
   title: string;
   contents: string;
   memo: string;
-  bookId: string;
+  order: number;
   bookTitle: string;
   chapter: number;
   headline: number;
