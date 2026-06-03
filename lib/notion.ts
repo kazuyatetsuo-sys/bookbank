@@ -155,6 +155,7 @@ export async function updateContent(
     bookTitle?: string;
     chapter?: number;
     headline?: number;
+  order?: number;
     genre?: string;
     author?: string;
     tags?: string[];
