@@ -107,6 +107,9 @@ export default function BookList({ books, genres, contents = [], onAdd, onUpdate
   const [isbnLoading, setIsbnLoading] = useState(false);
   const [openChapters, setOpenChapters] = useState<Record<number, boolean>>({});
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
+  const [detailContent, setDetailContent] = useState<Content | null>(null);
+  const [editingContent, setEditingContent] = useState<Content | null>(null);
+  const [showAddContent, setShowAddContent] = useState(false);
 
   const lookup = async (isbn: string, isEdit = false) => {
     setIsbnLoading(true);
