@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
       bookTitle: extractText(p.properties.BookTitle),
       chapter: Number(extractText(p.properties.Chapter)) || 0,
       headline: Number(extractText(p.properties.Headline)) || 0,
-      order: Number(extractText(p.properties.Order)) || 0,
+      order: Number(extractText(p.properties.order)) || 0,
       genre: extractText(p.properties.Genre),
       author: extractText(p.properties.Author),
       tags: extractMultiSelect(p.properties.Tags),
