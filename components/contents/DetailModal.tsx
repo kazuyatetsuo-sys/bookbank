@@ -9,9 +9,10 @@ interface Props {
   onClose: () => void;
   onEdit: () => void;
   onArchive: () => void;
+  onBookClick?: (book: Book) => void;
 }
 
-export default function DetailModal({ content, books, allContents, onClose, onEdit, onArchive }: Props) {
+export default function DetailModal({ content, books, allContents, onClose, onEdit, onArchive, onBookClick }: Props) {
   const [stack, setStack] = useState<Content[]>([content]);
   const cur = stack[stack.length - 1];
   const book = books.find(b => b.bookId === cur.bookId);
@@ -37,14 +38,18 @@ export default function DetailModal({ content, books, allContents, onClose, onEd
 
         <div className="p-5 space-y-4">
           <div className="flex items-start justify-between gap-3">
-            <p className="text-base font-medium leading-relaxed flex-1" style={{ color: "var(--text)" }}>{cur.contents}</p>
+            <p className="text-base font-medium leading-relaxed flex-1 whitespace-pre-wrap" style={{ color: "var(--text)" }}>{cur.contents}</p>
             <button onClick={onClose} className="text-xl flex-shrink-0" style={{ color: "var(--text-faint)" }}>×</button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <button
+            onClick={() => book && onBookClick?.(book)}
+            disabled={!book || !onBookClick}
+            className="flex items-center gap-2 text-left"
+          >
             {book?.coverUrl && <img src={book.coverUrl} alt="" className="w-5 h-7 object-cover rounded" />}
             <p className="text-xs" style={{ color: "var(--amber)" }}>{cur.bookTitle} · Ch.{p(cur.chapter)} · HL.{p(cur.headline)}</p>
-          </div>
+          </button>
 
           <div className="flex flex-wrap gap-1.5">
             {cur.author && <span className="px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}>✍ {cur.author}</span>}

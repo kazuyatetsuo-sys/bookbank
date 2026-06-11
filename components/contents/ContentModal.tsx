@@ -99,7 +99,7 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
 
         <div>
           <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>メモ</label>
-          <textarea className={`${inp} resize-none h-20`} style={inpStyle} placeholder="メモを入力…"
+          <textarea className={`${inp} resize-none h-60`} style={inpStyle} placeholder="メモを入力…"
             value={form.memo} onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))} />
         </div>
 

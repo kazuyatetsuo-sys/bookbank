@@ -360,6 +360,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
           onClose={() => setDetailContent(null)}
           onEdit={() => { setEditingContent(detailContent); setDetailContent(null); }}
           onArchive={() => { onArchiveContent(detailContent.id, !detailContent.archived); setDetailContent(null); }}
+          onBookClick={(b) => { setDetailContent(null); setSelected(b); setOpenChapters({}); }}
         />
       )}
 
