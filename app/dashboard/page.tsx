@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { useBookBank, Content } from "@/hooks/useBookBank";
+import { useBookBank, Content, Book } from "@/hooks/useBookBank";
 import ContentModal from "@/components/contents/ContentModal";
 import DetailModal from "@/components/contents/DetailModal";
 import BookList from "@/components/books/BookList";
@@ -15,24 +15,25 @@ export default function Dashboard() {
   const [showAdd, setShowAdd] = useState(false);
   const [historyDetail, setHistoryDetail] = useState<Content | null>(null);
   const [editingContent, setEditingContent] = useState<Content | null>(null);
-  const [randomContent, setRandomContent] = useState<Content | null>(null);
-  const [randomIdx, setRandomIdx] = useState(0);
+  const [randomContents, setRandomContents] = useState<Content[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
 
   const activeContents = bank.contents.filter(c => !c.archived);
 
-  const pickRandom = useCallback((dir: number = 1) => {
+  const pickRandom = useCallback(() => {
     if (!activeContents.length) return;
-    const next = (randomIdx + dir + activeContents.length) % activeContents.length;
-    setRandomIdx(next);
-    setRandomContent(activeContents[next]);
-  }, [activeContents, randomIdx]);
+    if (activeContents.length === 1) {
+      setRandomContents([activeContents[0]]);
+      return;
+    }
+    const shuffled = [...activeContents].sort(() => Math.random() - 0.5);
+    setRandomContents(shuffled.slice(0, 2));
+  }, [activeContents]);
 
   useEffect(() => {
-    if (tab === "random" && !randomContent && activeContents.length > 0) {
-      const idx = Math.floor(Math.random() * activeContents.length);
-      setRandomIdx(idx);
-      setRandomContent(activeContents[idx]);
+    if (tab === "random" && randomContents.length === 0 && activeContents.length > 0) {
+      pickRandom();
     }
   }, [tab, activeContents.length]);
 
@@ -49,6 +50,12 @@ export default function Dashboard() {
   ];
 
   const p = (n: number) => String(n).padStart(2, "0");
+
+  const goToBook = (book: Book) => {
+    setHistoryDetail(null);
+    setTab("books");
+    setSelectedBook(book);
+  };
 
   return (
     <div className="min-h-screen" style={{ background: "var(--bg)", color: "var(--text)" }}>
@@ -89,7 +96,7 @@ export default function Dashboard() {
               <button key={c.id} onClick={() => setHistoryDetail(c)}
                 className="w-full text-left px-4 py-3.5 rounded-xl transition hover:opacity-80 border"
                 style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
-                <p className="text-sm leading-snug mb-1.5 line-clamp-2" style={{ color: "var(--text)" }}>{c.contents || c.title}</p>
+                <p className="text-sm leading-snug mb-1.5 line-clamp-2 whitespace-pre-wrap" style={{ color: "var(--text)" }}>{c.contents || c.title}</p>
                 {c.memo && <p className="text-xs line-clamp-1" style={{ color: "var(--text-muted)" }}>{c.memo}</p>}
                 {c.tags.length > 0 && (
                   <div className="flex gap-1 mt-2 flex-wrap">
@@ -107,49 +114,48 @@ export default function Dashboard() {
 
         {tab === "books" && (
           <BookList books={bank.books} genres={bank.genres} contents={bank.contents}
-            onAdd={bank.addBook} onUpdate={bank.updateBook} onDelete={bank.deleteBook} onUpdateContent={bank.updateContent} onArchiveContent={bank.archiveContent} allContents={bank.contents} />
+            onAdd={bank.addBook} onUpdate={bank.updateBook} onDelete={bank.deleteBook}
+            onUpdateContent={bank.updateContent} onArchiveContent={bank.archiveContent} allContents={bank.contents}
+            selectedBook={selectedBook} onSelectBook={setSelectedBook} />
         )}
 
         {tab === "random" && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-xs" style={{ color: "var(--text-faint)" }}>{activeContents.length}件からランダム</p>
-              <button onClick={() => pickRandom(1)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border"
+              <button onClick={pickRandom} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border"
                 style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}>
-                🔀 次へ
+                🔀 シャッフル
               </button>
             </div>
-            {randomContent && (
-              <div className="rounded-2xl border overflow-hidden" style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
+            {randomContents.map(rc => (
+              <div key={rc.id} className="rounded-2xl border overflow-hidden" style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
                 <div className="p-5">
                   <p className="text-xs mb-2" style={{ color: "var(--amber)" }}>
-                    {randomContent.bookTitle} · Ch.{p(randomContent.chapter)} · HL.{p(randomContent.headline)}
+                    {rc.bookTitle} · Ch.{p(rc.chapter)} · HL.{p(rc.headline)}
                   </p>
-                  <p className="text-base leading-relaxed mb-3" style={{ color: "var(--text)" }}>{randomContent.contents}</p>
-                  {randomContent.tags.length > 0 && (
+                  <p className="text-base leading-relaxed mb-3 whitespace-pre-wrap" style={{ color: "var(--text)" }}>{rc.contents}</p>
+                  {rc.tags.length > 0 && (
                     <div className="flex gap-1 flex-wrap">
-                      {randomContent.tags.map(t => (
+                      {rc.tags.map(t => (
                         <span key={t} className="px-2 py-0.5 rounded-full text-xs border"
                           style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{t}</span>
                       ))}
                     </div>
                   )}
                 </div>
-                {randomContent.memo && (
+                {rc.memo && (
                   <div className="px-5 pb-4 border-t pt-4" style={{ borderColor: "var(--border)" }}>
                     <p className="text-xs mb-1" style={{ color: "var(--text-faint)" }}>メモ</p>
-                    <p className="text-sm" style={{ color: "var(--text-muted)" }}>{randomContent.memo}</p>
+                    <p className="text-sm whitespace-pre-wrap" style={{ color: "var(--text-muted)" }}>{rc.memo}</p>
                   </div>
                 )}
-                <div className="flex items-center justify-between px-5 py-3 border-t" style={{ borderColor: "var(--border)" }}>
-                  <button onClick={() => pickRandom(-1)} className="text-sm px-3 py-1.5 rounded-lg border"
-                    style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>＜</button>
-                  <button onClick={() => setHistoryDetail(randomContent)} className="text-xs" style={{ color: "var(--amber)" }}>詳細を見る</button>
-                  <button onClick={() => pickRandom(1)} className="text-sm px-3 py-1.5 rounded-lg border"
-                    style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>＞</button>
+                <div className="flex items-center justify-end px-5 py-3 border-t" style={{ borderColor: "var(--border)" }}>
+                  <button onClick={() => setHistoryDetail(rc)} className="text-xs" style={{ color: "var(--amber)" }}>詳細を見る</button>
                 </div>
               </div>
-            )}
+            ))}
+            {randomContents.length === 0 && <p className="text-center py-16 text-sm" style={{ color: "var(--text-faint)" }}>コンテンツがありません</p>}
           </div>
         )}
 
@@ -182,7 +188,8 @@ export default function Dashboard() {
         <DetailModal content={historyDetail} books={bank.books} allContents={bank.contents}
           onClose={() => setHistoryDetail(null)}
           onEdit={() => { setEditingContent(historyDetail); setHistoryDetail(null); }}
-          onArchive={() => { bank.archiveContent(historyDetail.id, !historyDetail.archived); setHistoryDetail(null); }} />
+          onArchive={() => { bank.archiveContent(historyDetail.id, !historyDetail.archived); setHistoryDetail(null); }}
+          onBookClick={goToBook} />
       )}
     </div>
   );

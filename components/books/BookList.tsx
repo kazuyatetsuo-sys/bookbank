@@ -14,6 +14,8 @@ interface Props {
   onDelete: (pageId: string) => Promise<void>;
   onUpdateContent?: (pageId: string, data: Partial<Content>) => Promise<void>;
   onArchiveContent?: (pageId: string, archived: boolean) => Promise<void>;
+  selectedBook?: Book | null;
+  onSelectBook?: (b: Book | null) => void;
 }
 
 type ChapterEntry = { num: string; title: string };
@@ -85,7 +87,7 @@ function ChapterList({ chapters, onChange }: { chapters: ChapterEntry[]; onChang
   );
 }
 
-export default function BookList({ books, genres, contents = [], allContents, onAdd, onUpdate, onDelete, onUpdateContent, onArchiveContent }: Props) {
+export default function BookList({ books, genres, contents = [], allContents, onAdd, onUpdate, onDelete, onUpdateContent, onArchiveContent, selectedBook, onSelectBook }: Props) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ ...emptyForm });
   const [chapters, setChapters] = useState<ChapterEntry[]>([]);
@@ -93,7 +95,9 @@ export default function BookList({ books, genres, contents = [], allContents, on
   const [editForm, setEditForm] = useState({ ...emptyForm });
   const [editChapters, setEditChapters] = useState<ChapterEntry[]>([]);
   const [saving, setSaving] = useState(false);
-  const [selected, setSelected] = useState<Book | null>(null);
+  const [internalSelected, setInternalSelected] = useState<Book | null>(null);
+  const selected = selectedBook !== undefined ? selectedBook : internalSelected;
+  const setSelected = onSelectBook || setInternalSelected;
   const [isbnLoading, setIsbnLoading] = useState(false);
   const [openChapters, setOpenChapters] = useState<Record<number, boolean>>({});
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
