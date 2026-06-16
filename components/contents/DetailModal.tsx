@@ -57,9 +57,16 @@ export default function DetailModal({ content, books, allContents, onClose, onEd
             {cur.tags.map(t => <span key={t} className="px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{t}</span>)}
           </div>
 
+          {cur.detail && (
+            <div className="rounded-xl p-3 border" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+              <p className="text-xs mb-1" style={{ color: "var(--text-faint)" }}>Detail</p>
+              <p className="text-sm whitespace-pre-wrap" style={{ color: "var(--text-muted)" }}>{cur.detail}</p>
+            </div>
+          )}
+
           {cur.memo && (
             <div className="rounded-xl p-3 border" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
-              <p className="text-xs mb-1" style={{ color: "var(--text-faint)" }}>メモ</p>
+              <p className="text-xs mb-1" style={{ color: "var(--text-faint)" }}>memo</p>
               <p className="text-sm whitespace-pre-wrap" style={{ color: "var(--text-muted)" }}>{cur.memo}</p>
             </div>
           )}

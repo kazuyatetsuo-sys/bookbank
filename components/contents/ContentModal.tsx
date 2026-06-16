@@ -7,29 +7,27 @@ interface Props {
   genres: string[];
   allContents: Content[];
   editing?: Content | null;
+  presetBook?: { bookId: string; bookTitle: string; genre?: string; author?: string };
   onClose: () => void;
   onSave: (data: Omit<Content, "id" | "title" | "archived" | "createdAt" | "updatedAt">) => Promise<boolean | void>;
   onUpdate?: (pageId: string, data: Partial<Content>) => Promise<void>;
 }
 
 const emptyForm = {
-  contents: "", memo: "", bookId: "", bookTitle: "",
+  contents: "", detail: "", memo: "", bookId: "", bookTitle: "",
   chapter: 0, headline: 0, order: 0, genre: "", author: "", tags: [] as string[], relIds: "",
 };
 
 const inp = "w-full rounded-xl p-3 text-sm border focus:outline-none";
 const inpStyle = { background: "var(--surface)", borderColor: "var(--border)", color: "var(--text)" };
 
-export default function ContentModal({ books, genres, allContents, editing, onClose, onSave, onUpdate }: Props) {
+export default function ContentModal({ books, genres, allContents, editing, presetBook, onClose, onSave, onUpdate }: Props) {
   const [form, setForm] = useState({ ...emptyForm });
   const [tagInput, setTagInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [relSearch, setRelSearch] = useState("");
 
-  // 全タグ一覧を収集
   const allTags = [...new Set(allContents.flatMap(c => c.tags))].sort();
-
-  // サジェスト: tagInputに一致する既存タグ（未選択のもの）
   const tagSuggestions = tagInput.trim()
     ? allTags.filter(t => t.includes(tagInput.trim()) && !form.tags.includes(t))
     : [];
@@ -37,14 +35,16 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
   useEffect(() => {
     if (editing) {
       setForm({
-        contents: editing.contents, memo: editing.memo, bookId: editing.bookId,
+        contents: editing.contents, detail: editing.detail ?? "", memo: editing.memo, bookId: editing.bookId,
         bookTitle: editing.bookTitle, chapter: editing.chapter, headline: editing.headline, order: editing.order ?? 0,
         genre: editing.genre, author: editing.author, tags: editing.tags, relIds: editing.relIds,
       });
+    } else if (presetBook) {
+      setForm({ ...emptyForm, bookId: presetBook.bookId, bookTitle: presetBook.bookTitle, genre: presetBook.genre ?? "", author: presetBook.author ?? "" });
     } else {
       setForm({ ...emptyForm });
     }
-  }, [editing]);
+  }, [editing, presetBook]);
 
   const handleBookChange = (bookId: string) => {
     const book = books.find((b) => b.bookId === bookId);
@@ -98,8 +98,14 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
         </div>
 
         <div>
-          <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>メモ</label>
-          <textarea className={`${inp} resize-none h-60`} style={inpStyle} placeholder="メモを入力…"
+          <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>Detail</label>
+          <textarea className={`${inp} resize-none h-24`} style={inpStyle} placeholder="補足情報を入力…"
+            value={form.detail} onChange={(e) => setForm((f) => ({ ...f, detail: e.target.value }))} />
+        </div>
+
+        <div>
+          <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>memo</label>
+          <textarea className={`${inp} resize-none h-60`} style={inpStyle} placeholder="気づきを入力…"
             value={form.memo} onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))} />
         </div>
 
@@ -152,7 +158,6 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
             <button onClick={() => addTag()} className="px-4 rounded-xl text-sm border"
               style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>追加</button>
           </div>
-          {/* サジェスト */}
           {tagSuggestions.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-2">
               {tagSuggestions.slice(0, 8).map(t => (
@@ -164,7 +169,6 @@ export default function ContentModal({ books, genres, allContents, editing, onCl
               ))}
             </div>
           )}
-          {/* 選択済みタグ */}
           {form.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">
               {form.tags.map((t) => (

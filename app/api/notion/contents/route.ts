@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
       id: p.id,
       title: extractText(p.properties.Title),
       contents: extractText(p.properties.Contents),
+      detail: extractText(p.properties.Detail),
       memo: extractText(p.properties.Memo),
       bookId: extractText(p.properties.BookId),
       bookTitle: extractText(p.properties.BookTitle),
@@ -63,6 +64,7 @@ export async function POST(req: NextRequest) {
 
   await createContent(notion, CONTENTS_DB_ID, {
     contents: body.contents ?? "",
+    detail: body.detail ?? "",
     memo: body.memo ?? "",
     bookId: body.bookId ?? "",
     bookTitle: body.bookTitle ?? "",
@@ -92,6 +94,7 @@ export async function PUT(req: NextRequest) {
   } else {
     await updateContent(notion, body.pageId, {
       contents: body.contents,
+      detail: body.detail,
       memo: body.memo,
       bookId: body.bookId,
       bookTitle: body.bookTitle,

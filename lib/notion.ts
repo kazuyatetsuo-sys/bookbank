@@ -108,6 +108,7 @@ export async function createContent(
   dbId: string,
   data: {
     contents: string;
+    detail?: string;
     memo: string;
     bookId: string;
     bookTitle: string;
@@ -125,6 +126,7 @@ export async function createContent(
   const properties: Parameters<typeof notion.pages.create>[0]["properties"] = {
     Title: { title: [{ text: { content: autoTitle } }] },
     Contents: { rich_text: [{ text: { content: data.contents } }] },
+    Detail: { rich_text: [{ text: { content: data.detail ?? "" } }] },
     Memo: { rich_text: [{ text: { content: data.memo } }] },
     BookId: { rich_text: [{ text: { content: data.bookId } }] },
     BookTitle: { rich_text: [{ text: { content: data.bookTitle } }] },
@@ -150,6 +152,7 @@ export async function updateContent(
   pageId: string,
   data: {
     contents?: string;
+    detail?: string;
     memo?: string;
     bookId?: string;
     bookTitle?: string;
@@ -166,6 +169,7 @@ export async function updateContent(
     UpdatedAt: { date: { start: new Date().toISOString() } },
   };
   if (data.contents !== undefined) properties.Contents = { rich_text: [{ text: { content: data.contents } }] };
+  if (data.detail !== undefined) properties.Detail = { rich_text: [{ text: { content: data.detail } }] };
   if (data.memo !== undefined) properties.Memo = { rich_text: [{ text: { content: data.memo } }] };
   if (data.bookId !== undefined) properties.BookId = { rich_text: [{ text: { content: data.bookId } }] };
   if (data.bookTitle !== undefined) {

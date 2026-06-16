@@ -344,12 +344,13 @@ export default function BookList({ books, genres, contents = [], allContents, on
       {showAddContent && selected && (
         <ContentModal
           books={books} genres={genres} allContents={allContents || contents}
+          presetBook={{ bookId: selected.bookId, bookTitle: selected.title, genre: selected.genre, author: selected.author }}
           onClose={() => setShowAddContent(false)}
           onSave={async (data) => {
             const res = await fetch("/api/notion/contents", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ ...data, bookId: selected.bookId, bookTitle: selected.title }),
+              body: JSON.stringify(data),
             });
             setShowAddContent(false);
             return res.ok;
