@@ -63,3 +63,19 @@
 
 ## 未着手・要望候補（このセッション終了時点で明示の依頼はなし）
 - 特になし。直近の依頼はすべて対応済み。新規要望があれば本ファイルの「主な変更履歴」に追記していく運用を推奨。
+
+## 直近の未完了タスク（要対応）
+NotionのContents DBに `Detail`（テキスト）プロパティを追加済み。以下3点を実装してください。
+
+1. **書籍詳細からコンテンツ追加時、書籍を自動選択**
+   `components/books/BookList.tsx` の `showAddContent` 用 `ContentModal` 呼び出しで、開いている `selected`（書籍）の情報をフォームに事前セットする。`ContentModal` に `presetBook?: { bookId: string; bookTitle: string; genre?: string; author?: string }` のような props を追加し、`editing` がない新規作成時にこれをデフォルト値として使う案で良い。
+
+2. **Detail欄の新設**（Notion側プロパティ `Detail` は追加済み）
+   - `hooks/useBookBank.ts` の `Content` interface に `detail: string;` を追加
+   - `lib/notion.ts` の `createContent`/`updateContent` に `Detail` プロパティの読み書きを追加
+   - `app/api/notion/contents/route.ts` のGET/POST/PUTで `detail` のマッピングを追加（着手済みだったが未完了 — `contents` extractText/body部分に `detail` 追加のsedを実行中だった）
+   - `components/contents/ContentModal.tsx`: Contents欄とメモ欄の間に「Detail」入力欄（textarea）を追加。Detailは「contentsを補足するための情報」、メモは「気づきを入力するためのスペース」という役割分担
+   - `components/contents/DetailModal.tsx`: 表示側でもDetailをメモと別枠で表示
+
+3. **「メモ」ラベルの表記変更**
+   `ContentModal.tsx`・`DetailModal.tsx` 内のラベル表示「メモ」を「memo」（小文字英語）に変更。理由: Contents欄が既に英語表記のため、Detail/memoとの表記統一。
