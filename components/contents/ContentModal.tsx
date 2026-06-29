@@ -69,12 +69,25 @@ export default function ContentModal({ books, genres, allContents, editing, pres
     .filter((c) => relSearch ? c.title.includes(relSearch) || c.contents.includes(relSearch) : true)
     .slice(0, 20);
 
-  const handleSave = async () => {
+  const handleSave = async (andContinue = false) => {
     setSaving(true);
     try {
       if (editing && onUpdate) await onUpdate(editing.id, form);
       else await onSave(form);
-      onClose();
+      if (andContinue && !editing) {
+        setForm(f => ({
+          ...emptyForm,
+          bookId: f.bookId,
+          bookTitle: f.bookTitle,
+          genre: f.genre,
+          author: f.author,
+          chapter: f.chapter,
+          headline: f.headline,
+          order: f.order,
+        }));
+      } else {
+        onClose();
+      }
     } finally {
       setSaving(false);
     }
@@ -203,7 +216,14 @@ export default function ContentModal({ books, genres, allContents, editing, pres
         <div className="flex gap-3 pt-2">
           <button onClick={onClose} className="flex-1 py-3 rounded-xl text-sm border"
             style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>キャンセル</button>
-          <button onClick={handleSave} disabled={saving}
+          {!editing && (
+            <button onClick={() => handleSave(true)} disabled={saving}
+              className="flex-1 py-3 rounded-xl font-semibold text-sm border disabled:opacity-50"
+              style={{ borderColor: "var(--amber-border)", color: "var(--amber)", background: "var(--amber-bg)" }}>
+              {saving ? "保存中…" : "続けて追加"}
+            </button>
+          )}
+          <button onClick={() => handleSave()} disabled={saving}
             className="flex-1 py-3 rounded-xl font-semibold text-sm disabled:opacity-50"
             style={{ background: "var(--amber)", color: "#fff" }}>
             {saving ? "保存中…" : "保存"}

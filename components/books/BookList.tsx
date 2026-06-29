@@ -130,7 +130,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
   const allGenres = [...new Set(books.map(b => b.genre || "未分類"))].sort();
   const displayBooks = selectedGenre
     ? books.filter(b => (b.genre || "未分類") === selectedGenre)
-    : [...books].sort(() => Math.random() - 0.5);
+    : [...books].sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
 
   return (
     <div className="space-y-4">
@@ -155,7 +155,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
 
       {/* 書籍一覧 */}
       <div className="space-y-2">
-        {!selectedGenre && <p className="text-xs" style={{ color: "var(--text-faint)" }}>ランダム表示</p>}
+        {!selectedGenre && <p className="text-xs" style={{ color: "var(--text-faint)" }}>登録順</p>}
         {displayBooks.map(b => (
           <div key={b.id} onClick={() => { setSelected(b); setOpenChapters({}); }}
             className="flex gap-3 items-center px-4 py-3 rounded-xl border cursor-pointer transition hover:opacity-80"
@@ -209,7 +209,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
 
               {(() => {
                 const bc = contents.filter(c => !c.archived && c.bookId === selected.bookId)
-                  .sort((a, b) => a.chapter - b.chapter || a.headline - b.headline || (a.order && b.order ? a.order - b.order : a.order ? -1 : b.order ? 1 : new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()));
+                  .sort((a, b) => a.chapter - b.chapter || a.headline - b.headline || (a.order != null && b.order != null ? a.order - b.order : a.order != null ? -1 : b.order != null ? 1 : new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()));
                 const chs = [...new Set(bc.map(c => c.chapter))].sort((a, b) => a - b);
                 const chapterTitleMap: Record<string, string> = {};
                 parseChapterTitles(selected.chapterTitles || "").forEach(e => { chapterTitleMap[e.num] = e.title; });
