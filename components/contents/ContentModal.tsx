@@ -26,6 +26,7 @@ export default function ContentModal({ books, genres, allContents, editing, pres
   const [tagInput, setTagInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [relSearch, setRelSearch] = useState("");
+  const [forcedNew, setForcedNew] = useState(false);
 
   const allTags = [...new Set(allContents.flatMap(c => c.tags))].sort();
   const tagSuggestions = tagInput.trim()
@@ -63,6 +64,8 @@ export default function ContentModal({ books, genres, allContents, editing, pres
     setForm((f) => ({ ...f, relIds: next.join(",") }));
   };
 
+  const isEditing = !!editing && !forcedNew;
+
   const relIdList = form.relIds ? form.relIds.split(",").filter(Boolean) : [];
   const relCandidates = allContents
     .filter((c) => !c.archived && c.id !== editing?.id)
@@ -72,9 +75,10 @@ export default function ContentModal({ books, genres, allContents, editing, pres
   const handleSave = async (andContinue = false) => {
     setSaving(true);
     try {
-      if (editing && onUpdate) await onUpdate(editing.id, form);
+      if (isEditing && onUpdate) await onUpdate(editing!.id, form);
       else await onSave(form);
-      if (andContinue && !editing) {
+      if (andContinue) {
+        setForcedNew(true);
         setForm(f => ({
           ...emptyForm,
           bookId: f.bookId,
@@ -100,7 +104,7 @@ export default function ContentModal({ books, genres, allContents, editing, pres
         style={{ background: "var(--bg2)", borderColor: "var(--border)" }} onClick={(e) => e.stopPropagation()}>
 
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold" style={{ color: "var(--text)" }}>{editing ? "編集" : "新規コンテンツ"}</h2>
+          <h2 className="text-lg font-semibold" style={{ color: "var(--text)" }}>{isEditing ? "編集" : "新規コンテンツ"}</h2>
           <button onClick={onClose} className="text-2xl leading-none" style={{ color: "var(--text-muted)" }}>×</button>
         </div>
 
@@ -216,13 +220,11 @@ export default function ContentModal({ books, genres, allContents, editing, pres
         <div className="flex gap-3 pt-2">
           <button onClick={onClose} className="flex-1 py-3 rounded-xl text-sm border"
             style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>キャンセル</button>
-          {!editing && (
-            <button onClick={() => handleSave(true)} disabled={saving}
-              className="flex-1 py-3 rounded-xl font-semibold text-sm border disabled:opacity-50"
-              style={{ borderColor: "var(--amber-border)", color: "var(--amber)", background: "var(--amber-bg)" }}>
-              {saving ? "保存中…" : "続けて追加"}
-            </button>
-          )}
+          <button onClick={() => handleSave(true)} disabled={saving}
+            className="flex-1 py-3 rounded-xl font-semibold text-sm border disabled:opacity-50"
+            style={{ borderColor: "var(--amber-border)", color: "var(--amber)", background: "var(--amber-bg)" }}>
+            {saving ? "保存中…" : "続けて追加"}
+          </button>
           <button onClick={() => handleSave()} disabled={saving}
             className="flex-1 py-3 rounded-xl font-semibold text-sm disabled:opacity-50"
             style={{ background: "var(--amber)", color: "#fff" }}>
