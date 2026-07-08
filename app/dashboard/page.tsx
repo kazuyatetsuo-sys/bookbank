@@ -177,7 +177,7 @@ export default function Dashboard() {
       {showAdd && (
         <ContentModal books={bank.books} genres={bank.genres} allContents={bank.contents}
           onClose={() => setShowAdd(false)}
-          onSave={async (data) => { const ok = await bank.addContent(data); if (ok) setShowAdd(false); return ok ?? false; }} />
+          onSave={async (data) => { await bank.addContent(data); }} />
       )}
       {editingContent && (
         <ContentModal books={bank.books} genres={bank.genres} allContents={bank.contents} editing={editingContent}
