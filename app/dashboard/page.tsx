@@ -115,7 +115,8 @@ export default function Dashboard() {
         {tab === "books" && (
           <BookList books={bank.books} genres={bank.genres} contents={bank.contents}
             onAdd={bank.addBook} onUpdate={bank.updateBook} onDelete={bank.deleteBook}
-            onUpdateContent={bank.updateContent} onArchiveContent={bank.archiveContent} allContents={bank.contents}
+            onUpdateContent={bank.updateContent} onArchiveContent={bank.archiveContent}
+            onAddContent={bank.addContent} allContents={bank.contents}
             selectedBook={selectedBook} onSelectBook={setSelectedBook} />
         )}
 

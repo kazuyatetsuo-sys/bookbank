@@ -14,6 +14,7 @@ interface Props {
   onDelete: (pageId: string) => Promise<void>;
   onUpdateContent?: (pageId: string, data: Partial<Content>) => Promise<void>;
   onArchiveContent?: (pageId: string, archived: boolean) => Promise<void>;
+  onAddContent?: (data: Omit<Content, "id" | "title" | "archived" | "createdAt" | "updatedAt">) => Promise<boolean>;
   selectedBook?: Book | null;
   onSelectBook?: (b: Book | null) => void;
 }
@@ -87,7 +88,7 @@ function ChapterList({ chapters, onChange }: { chapters: ChapterEntry[]; onChang
   );
 }
 
-export default function BookList({ books, genres, contents = [], allContents, onAdd, onUpdate, onDelete, onUpdateContent, onArchiveContent, selectedBook, onSelectBook }: Props) {
+export default function BookList({ books, genres, contents = [], allContents, onAdd, onUpdate, onDelete, onUpdateContent, onArchiveContent, onAddContent, selectedBook, onSelectBook }: Props) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ ...emptyForm });
   const [chapters, setChapters] = useState<ChapterEntry[]>([]);
@@ -347,13 +348,15 @@ export default function BookList({ books, genres, contents = [], allContents, on
           presetBook={{ bookId: selected.bookId, bookTitle: selected.title, genre: selected.genre, author: selected.author }}
           onClose={() => setShowAddContent(false)}
           onSave={async (data) => {
-            const res = await fetch("/api/notion/contents", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(data),
-            });
-            setShowAddContent(false);
-            return res.ok;
+            if (onAddContent) {
+              await onAddContent(data);
+            } else {
+              await fetch("/api/notion/contents", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+              });
+            }
           }}
         />
       )}
