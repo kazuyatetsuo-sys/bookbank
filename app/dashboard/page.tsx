@@ -122,13 +122,7 @@ export default function Dashboard() {
 
         {tab === "random" && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xs" style={{ color: "var(--text-faint)" }}>{activeContents.length}件からランダム</p>
-              <button onClick={pickRandom} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border"
-                style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}>
-                🔀 シャッフル
-              </button>
-            </div>
+            <p className="text-xs" style={{ color: "var(--text-faint)" }}>{activeContents.length}件からランダム</p>
             {randomContents.map(rc => (
               <div key={rc.id} className="rounded-2xl border overflow-hidden" style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
                 <div className="p-5">
@@ -136,6 +130,9 @@ export default function Dashboard() {
                     {rc.bookTitle} · Ch.{p(rc.chapter)} · HL.{p(rc.headline)}
                   </p>
                   <p className="text-base leading-relaxed mb-3 whitespace-pre-wrap" style={{ color: "var(--text)" }}>{rc.contents}</p>
+                  {rc.detail && (
+                    <p className="text-sm leading-relaxed mb-3 whitespace-pre-wrap" style={{ color: "var(--text-muted)" }}>{rc.detail}</p>
+                  )}
                   {rc.tags.length > 0 && (
                     <div className="flex gap-1 flex-wrap">
                       {rc.tags.map(t => (
@@ -170,6 +167,10 @@ export default function Dashboard() {
             onArchive={bank.archiveContent} onUpdate={bank.updateContent} />
         )}
       </main>
+
+      <button onClick={() => { setTab("random"); pickRandom(); }}
+        className="fixed bottom-24 right-6 z-40 w-14 h-14 rounded-full text-2xl shadow-xl flex items-center justify-center transition hover:scale-105 active:scale-95"
+        style={{ background: "var(--surface)", border: "2px solid var(--border)", color: "var(--text-muted)" }}>🎲</button>
 
       <button onClick={() => setShowAdd(true)}
         className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full text-2xl font-bold shadow-xl flex items-center justify-center transition hover:scale-105 active:scale-95"
