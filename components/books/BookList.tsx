@@ -256,7 +256,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
                                             <span className="text-xs flex-shrink-0 mt-0.5 font-mono" style={{ color: "var(--text-faint)" }}>#{idx + 1}</span>
                                             <div className="flex-1 min-w-0">
                                               <p className="text-sm leading-relaxed" style={{ color: "var(--text)" }}>{c.contents}</p>
-                                              {c.memo && <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>{c.memo}</p>}
+                                              {c.detail && <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>{c.detail}</p>}
                                               {c.tags.length > 0 && (
                                                 <div className="flex gap-1 mt-1.5 flex-wrap">
                                                   {c.tags.map(t => <span key={t} className="px-1.5 py-0.5 rounded-full text-xs border" style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{t}</span>)}
