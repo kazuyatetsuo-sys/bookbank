@@ -44,7 +44,6 @@ export default function Dashboard() {
   const tabs = [
     { id: "history" as Tab,  label: "History",   icon: "🕐" },
     { id: "books" as Tab,    label: "Books",     icon: "📚" },
-    { id: "random" as Tab,   label: "Random",    icon: "🎲" },
     { id: "sortlist" as Tab, label: "Sort List", icon: "☰"  },
     { id: "sort" as Tab,     label: "Sort",      icon: "⚡" },
   ];
