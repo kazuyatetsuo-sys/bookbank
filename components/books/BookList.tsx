@@ -131,7 +131,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
   const allGenres = [...new Set(books.map(b => b.genre || "未分類"))].sort();
   const displayBooks = selectedGenre
     ? books.filter(b => (b.genre || "未分類") === selectedGenre)
-    : [...books].sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
+    : [...books].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
   return (
     <div className="space-y-4">
@@ -156,7 +156,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
 
       {/* 書籍一覧 */}
       <div className="space-y-2">
-        {!selectedGenre && <p className="text-xs" style={{ color: "var(--text-faint)" }}>登録順</p>}
+        {!selectedGenre && <p className="text-xs" style={{ color: "var(--text-faint)" }}>新しい順</p>}
         {displayBooks.map(b => (
           <div key={b.id} onClick={() => { setSelected(b); setOpenChapters({}); }}
             className="flex gap-3 items-center px-4 py-3 rounded-xl border cursor-pointer transition hover:opacity-80"

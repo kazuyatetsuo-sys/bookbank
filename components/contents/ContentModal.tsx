@@ -45,7 +45,7 @@ export default function ContentModal({ books, genres, allContents, editing, pres
     } else {
       setForm({ ...emptyForm });
     }
-  }, [editing, presetBook]);
+  }, [editing?.id, presetBook?.bookId]);
 
   const handleBookChange = (bookId: string) => {
     const book = books.find((b) => b.bookId === bookId);
