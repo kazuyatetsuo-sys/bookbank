@@ -187,7 +187,7 @@ export default function SortPage({ sorts, contents, books, genres, onAddSort, on
           editing={editing}
           onClose={() => setEditing(null)}
           onSave={async () => {}}
-          onUpdate={async (pageId, data) => { await onUpdate(pageId, data); setEditing(null); }}
+          onUpdate={async (pageId, data, keepOpen) => { await onUpdate(pageId, data); if (!keepOpen) setEditing(null); }}
         />
       )}
     </div>

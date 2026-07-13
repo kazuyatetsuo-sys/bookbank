@@ -94,7 +94,7 @@ export default function SettingsPage({ contents, books, genres, onArchive, onUpd
       {editing && (
         <ContentModal books={books} genres={genres} allContents={contents} editing={editing}
           onClose={() => setEditing(null)} onSave={async () => {}}
-          onUpdate={async (pageId, data) => { await onUpdate(pageId, data); setEditing(null); }} />
+          onUpdate={async (pageId, data, keepOpen) => { await onUpdate(pageId, data); if (!keepOpen) setEditing(null); }} />
       )}
     </div>
   );

@@ -10,7 +10,7 @@ interface Props {
   presetBook?: { bookId: string; bookTitle: string; genre?: string; author?: string };
   onClose: () => void;
   onSave: (data: Omit<Content, "id" | "title" | "archived" | "createdAt" | "updatedAt">) => Promise<boolean | void>;
-  onUpdate?: (pageId: string, data: Partial<Content>) => Promise<void>;
+  onUpdate?: (pageId: string, data: Partial<Content>, keepOpen?: boolean) => Promise<void>;
 }
 
 const emptyForm = {
@@ -75,7 +75,7 @@ export default function ContentModal({ books, genres, allContents, editing, pres
   const handleSave = async (andContinue = false) => {
     setSaving(true);
     try {
-      if (isEditing && onUpdate) await onUpdate(editing!.id, form);
+      if (isEditing && onUpdate) await onUpdate(editing!.id, form, andContinue);
       else await onSave(form);
       if (andContinue) {
         setForcedNew(true);
@@ -87,7 +87,7 @@ export default function ContentModal({ books, genres, allContents, editing, pres
           author: f.author,
           chapter: f.chapter,
           headline: f.headline,
-          order: f.order,
+          order: f.order + 1,
         }));
       } else {
         onClose();
