@@ -48,7 +48,7 @@ export default function DetailModal({ content, books, allContents, onClose, onEd
             className="flex items-center gap-2 text-left"
           >
             {book?.coverUrl && <img src={book.coverUrl} alt="" className="w-5 h-7 object-cover rounded" />}
-            <p className="text-xs" style={{ color: "var(--amber)" }}>{cur.bookTitle} · Ch.{p(cur.chapter)} · HL.{p(cur.headline)}</p>
+            <p className="text-xs" style={{ color: "var(--amber)" }}>{cur.bookTitle} · Ch.{p(cur.chapter)} · HL.{p(cur.headline)} · #{cur.order}</p>
           </button>
 
           <div className="flex flex-wrap gap-1.5">

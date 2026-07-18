@@ -126,7 +126,7 @@ export default function Dashboard() {
               <div key={rc.id} className="rounded-2xl border overflow-hidden" style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
                 <div className="p-5">
                   <p className="text-xs mb-2" style={{ color: "var(--amber)" }}>
-                    {rc.bookTitle} · Ch.{p(rc.chapter)} · HL.{p(rc.headline)}
+                    {rc.bookTitle} · Ch.{p(rc.chapter)} · HL.{p(rc.headline)} · #{rc.order}
                   </p>
                   <p className="text-base leading-relaxed mb-3 whitespace-pre-wrap" style={{ color: "var(--text)" }}>{rc.contents}</p>
                   {rc.detail && (

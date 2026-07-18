@@ -101,6 +101,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
   const setSelected = onSelectBook || setInternalSelected;
   const [isbnLoading, setIsbnLoading] = useState(false);
   const [openChapters, setOpenChapters] = useState<Record<number, boolean>>({});
+  const [openHeadlines, setOpenHeadlines] = useState<Record<string, boolean>>({});
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [detailContent, setDetailContent] = useState<Content | null>(null);
   const [editingContent, setEditingContent] = useState<Content | null>(null);
@@ -168,7 +169,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
       <div className="space-y-2">
         {!selectedGenre && <p className="text-xs" style={{ color: "var(--text-faint)" }}>新しい順</p>}
         {displayBooks.map(b => (
-          <div key={b.id} onClick={() => { setSelected(b); setOpenChapters({}); }}
+          <div key={b.id} onClick={() => { setSelected(b); setOpenChapters({}); setOpenHeadlines({}); }}
             className="flex gap-3 items-center px-4 py-3 rounded-xl border cursor-pointer transition hover:opacity-80"
             style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
             {b.coverUrl
@@ -248,40 +249,49 @@ export default function BookList({ books, genres, contents = [], allContents, on
                             </div>
                           </button>
                           {isOpen && (
-                            <div className="mt-1 pl-2 space-y-3">
+                            <div className="mt-1 pl-2 space-y-1.5">
                               {headlines.map(hl => {
+                                const hlKey = `${ch}-${hl}`;
                                 const hlContents = chContents.filter(c => c.headline === hl);
+                                const isHlOpen = openHeadlines[hlKey] ?? false;
                                 return (
                                   <div key={hl}>
-                                    <div className="flex items-center gap-2 mb-1.5">
+                                    <button
+                                      onClick={() => setOpenHeadlines(prev => ({ ...prev, [hlKey]: !prev[hlKey] }))}
+                                      className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition hover:opacity-70"
+                                      style={{ background: "var(--surface)" }}>
                                       <span className="text-xs font-mono" style={{ color: "var(--amber)" }}>HL.{p(hl)}</span>
                                       <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                      {hlContents.map((c, idx) => (
-                                        <button key={c.id} onClick={() => setDetailContent(c)}
-                                          className="w-full text-left px-3 py-2.5 rounded-lg border transition hover:opacity-70"
-                                          style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
-                                          <div className="flex items-start gap-2">
-                                            <span className="text-xs flex-shrink-0 mt-0.5 font-mono" style={{ color: "var(--text-faint)" }}>#{idx + 1}</span>
-                                            <div className="flex-1 min-w-0">
-                                              <p className="text-sm leading-relaxed" style={{ color: "var(--text)" }}>{c.contents}</p>
-                                              {c.detail && <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>{c.detail}</p>}
-                                              {c.imageUrl && (
-                                                <img src={c.imageUrl} alt="" className="mt-2 max-h-32 rounded-lg object-cover border"
-                                                  style={{ borderColor: "var(--border)" }}
-                                                  onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                                              )}
-                                              {c.tags.length > 0 && (
-                                                <div className="flex gap-1 mt-1.5 flex-wrap">
-                                                  {c.tags.map(t => <span key={t} className="px-1.5 py-0.5 rounded-full text-xs border" style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{t}</span>)}
-                                                </div>
-                                              )}
+                                      <span className="text-xs flex-shrink-0" style={{ color: "var(--text-faint)" }}>{hlContents.length}件</span>
+                                      <span className="text-xs flex-shrink-0" style={{ color: "var(--text-faint)" }}>{isHlOpen ? "▲" : "▼"}</span>
+                                    </button>
+                                    {isHlOpen && (
+                                      <div className="mt-1 space-y-1.5">
+                                        {hlContents.map((c) => (
+                                          <button key={c.id} onClick={() => setDetailContent(c)}
+                                            className="w-full text-left px-3 py-2.5 rounded-lg border transition hover:opacity-70"
+                                            style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+                                            <div className="flex items-start gap-2">
+                                              <span className="text-xs flex-shrink-0 mt-0.5 font-mono" style={{ color: "var(--text-faint)" }}>#{c.order}</span>
+                                              <div className="flex-1 min-w-0">
+                                                <p className="text-sm leading-relaxed" style={{ color: "var(--text)" }}>{c.contents}</p>
+                                                {c.detail && <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>{c.detail}</p>}
+                                                {c.imageUrl && (
+                                                  <img src={c.imageUrl} alt="" className="mt-2 max-h-32 rounded-lg object-cover border"
+                                                    style={{ borderColor: "var(--border)" }}
+                                                    onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                                                )}
+                                                {c.tags.length > 0 && (
+                                                  <div className="flex gap-1 mt-1.5 flex-wrap">
+                                                    {c.tags.map(t => <span key={t} className="px-1.5 py-0.5 rounded-full text-xs border" style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{t}</span>)}
+                                                  </div>
+                                                )}
+                                              </div>
                                             </div>
-                                          </div>
-                                        </button>
-                                      ))}
-                                    </div>
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
                                   </div>
                                 );
                               })}
@@ -383,7 +393,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
           onClose={() => setDetailContent(null)}
           onEdit={() => { setEditingContent(detailContent); setDetailContent(null); }}
           onArchive={() => { onArchiveContent(detailContent.id, !detailContent.archived); setDetailContent(null); }}
-          onBookClick={(b) => { setDetailContent(null); setSelected(b); setOpenChapters({}); }}
+          onBookClick={(b) => { setDetailContent(null); setSelected(b); setOpenChapters({}); setOpenHeadlines({}); }}
         />
       )}
 
