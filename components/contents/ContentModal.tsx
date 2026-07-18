@@ -15,7 +15,7 @@ interface Props {
 
 const emptyForm = {
   contents: "", detail: "", memo: "", bookId: "", bookTitle: "",
-  chapter: 0, headline: 0, order: 0, genre: "", author: "", tags: [] as string[], relIds: "",
+  chapter: 0, headline: 0, order: 0, genre: "", author: "", tags: [] as string[], relIds: "", imageUrl: "",
 };
 
 const inp = "w-full rounded-xl p-3 text-sm border focus:outline-none";
@@ -27,6 +27,8 @@ export default function ContentModal({ books, genres, allContents, editing, pres
   const [saving, setSaving] = useState(false);
   const [relSearch, setRelSearch] = useState("");
   const [forcedNew, setForcedNew] = useState(false);
+  const [imageInput, setImageInput] = useState("");
+  const [imageConverting, setImageConverting] = useState(false);
 
   const allTags = [...new Set(allContents.flatMap(c => c.tags))].sort();
   const tagSuggestions = tagInput.trim()
@@ -39,11 +41,15 @@ export default function ContentModal({ books, genres, allContents, editing, pres
         contents: editing.contents, detail: editing.detail ?? "", memo: editing.memo, bookId: editing.bookId,
         bookTitle: editing.bookTitle, chapter: editing.chapter, headline: editing.headline, order: editing.order ?? 0,
         genre: editing.genre, author: editing.author, tags: editing.tags, relIds: editing.relIds,
+        imageUrl: editing.imageUrl ?? "",
       });
+      setImageInput(editing.imageUrl ?? "");
     } else if (presetBook) {
       setForm({ ...emptyForm, bookId: presetBook.bookId, bookTitle: presetBook.bookTitle, genre: presetBook.genre ?? "", author: presetBook.author ?? "" });
+      setImageInput("");
     } else {
       setForm({ ...emptyForm });
+      setImageInput("");
     }
   }, [editing?.id, presetBook?.bookId]);
 
@@ -64,6 +70,23 @@ export default function ContentModal({ books, genres, allContents, editing, pres
     setForm((f) => ({ ...f, relIds: next.join(",") }));
   };
 
+  const handleImageInput = async (val: string) => {
+    setImageInput(val);
+    const isGooglePhotos = val.includes("photos.google.com") || val.includes("photos.app.goo.gl");
+    if (isGooglePhotos && val.trim()) {
+      setImageConverting(true);
+      try {
+        const res = await fetch(`/api/google-photos?url=${encodeURIComponent(val.trim())}`);
+        const data = await res.json();
+        if (data.imageUrl) setForm(f => ({ ...f, imageUrl: data.imageUrl }));
+      } finally {
+        setImageConverting(false);
+      }
+    } else {
+      setForm(f => ({ ...f, imageUrl: val }));
+    }
+  };
+
   const isEditing = !!editing && !forcedNew;
 
   const relIdList = form.relIds ? form.relIds.split(",").filter(Boolean) : [];
@@ -79,6 +102,7 @@ export default function ContentModal({ books, genres, allContents, editing, pres
       else await onSave(form);
       if (andContinue) {
         setForcedNew(true);
+        setImageInput("");
         setForm(f => ({
           ...emptyForm,
           bookId: f.bookId,
@@ -124,6 +148,25 @@ export default function ContentModal({ books, genres, allContents, editing, pres
           <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>memo</label>
           <textarea className={`${inp} resize-none h-60`} style={inpStyle} placeholder="気づきを入力…"
             value={form.memo} onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))} />
+        </div>
+
+        {/* Image URL */}
+        <div>
+          <label className="text-xs mb-1 block" style={{ color: "var(--text-muted)" }}>画像URL（Google Photos URL を貼ると自動変換）</label>
+          <input className={inp} style={inpStyle}
+            placeholder="https://photos.google.com/... または画像URL"
+            value={imageInput}
+            onChange={(e) => handleImageInput(e.target.value)} />
+          {imageConverting && (
+            <p className="text-xs mt-1" style={{ color: "var(--text-faint)" }}>変換中...</p>
+          )}
+          {form.imageUrl && !imageConverting && (
+            <div className="mt-2">
+              <img src={form.imageUrl} alt="preview" className="max-h-40 rounded-xl object-cover border"
+                style={{ borderColor: "var(--border)" }}
+                onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+            </div>
+          )}
         </div>
 
         <div className="space-y-3">

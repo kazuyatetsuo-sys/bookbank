@@ -28,6 +28,7 @@ export interface Content {
   author: string;
   tags: string[];
   relIds: string;
+  imageUrl: string;
   archived: boolean;
   createdAt: string;
   updatedAt: string;

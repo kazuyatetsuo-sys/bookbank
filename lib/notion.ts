@@ -114,11 +114,12 @@ export async function createContent(
     bookTitle: string;
     chapter: number;
     headline: number;
-  order?: number;
+    order?: number;
     genre: string;
     author: string;
     tags: string[];
     relIds: string;
+    imageUrl?: string;
     appId: string;
   }
 ) {
@@ -136,6 +137,7 @@ export async function createContent(
     Author: { rich_text: [{ text: { content: data.author } }] },
     Tags: { multi_select: data.tags.map((t) => ({ name: t })) },
     RelIds: { rich_text: [{ text: { content: data.relIds } }] },
+    ImageUrl: { rich_text: [{ text: { content: data.imageUrl ?? "" } }] },
     AppId: { rich_text: [{ text: { content: data.appId } }] },
     Archived: { checkbox: false },
     CreatedAt: { date: { start: new Date().toISOString() } },
@@ -158,11 +160,12 @@ export async function updateContent(
     bookTitle?: string;
     chapter?: number;
     headline?: number;
-  order?: number;
+    order?: number;
     genre?: string;
     author?: string;
     tags?: string[];
     relIds?: string;
+    imageUrl?: string;
   }
 ) {
   const properties: Parameters<typeof notion.pages.create>[0]["properties"] = {
@@ -187,6 +190,7 @@ export async function updateContent(
   if (data.author !== undefined) properties.Author = { rich_text: [{ text: { content: data.author } }] };
   if (data.tags !== undefined) properties.Tags = { multi_select: data.tags.map((t) => ({ name: t })) };
   if (data.relIds !== undefined) properties.RelIds = { rich_text: [{ text: { content: data.relIds } }] };
+  if (data.imageUrl !== undefined) properties.ImageUrl = { rich_text: [{ text: { content: data.imageUrl } }] };
   return notion.pages.update({ page_id: pageId, properties });
 }
 

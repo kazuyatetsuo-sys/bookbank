@@ -129,9 +129,19 @@ export default function BookList({ books, genres, contents = [], allContents, on
   };
 
   const allGenres = [...new Set(books.map(b => b.genre || "未分類"))].sort();
+
+  const latestContentDate = (bookId: string) =>
+    contents
+      .filter(c => !c.archived && c.bookId === bookId)
+      .reduce((max, c) => Math.max(max, new Date(c.createdAt || 0).getTime()), 0);
+
   const displayBooks = selectedGenre
     ? books.filter(b => (b.genre || "未分類") === selectedGenre)
-    : [...books].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    : [...books].sort((a, b) => {
+        const dateA = latestContentDate(a.bookId) || new Date(a.createdAt || 0).getTime();
+        const dateB = latestContentDate(b.bookId) || new Date(b.createdAt || 0).getTime();
+        return dateB - dateA;
+      });
 
   return (
     <div className="space-y-4">
@@ -257,6 +267,11 @@ export default function BookList({ books, genres, contents = [], allContents, on
                                             <div className="flex-1 min-w-0">
                                               <p className="text-sm leading-relaxed" style={{ color: "var(--text)" }}>{c.contents}</p>
                                               {c.detail && <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>{c.detail}</p>}
+                                              {c.imageUrl && (
+                                                <img src={c.imageUrl} alt="" className="mt-2 max-h-32 rounded-lg object-cover border"
+                                                  style={{ borderColor: "var(--border)" }}
+                                                  onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                                              )}
                                               {c.tags.length > 0 && (
                                                 <div className="flex gap-1 mt-1.5 flex-wrap">
                                                   {c.tags.map(t => <span key={t} className="px-1.5 py-0.5 rounded-full text-xs border" style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{t}</span>)}
@@ -376,7 +391,8 @@ export default function BookList({ books, genres, contents = [], allContents, on
       {editingContent && onUpdateContent && (
         <ContentModal
           books={books} genres={genres} allContents={allContents || contents} editing={editingContent}
-          onClose={() => setEditingContent(null)} onSave={async () => {}}
+          onClose={() => setEditingContent(null)}
+          onSave={async (data) => { if (onAddContent) await onAddContent(data); }}
           onUpdate={async (pageId, data, keepOpen) => { await onUpdateContent(pageId, data); if (!keepOpen) setEditingContent(null); }}
         />
       )}

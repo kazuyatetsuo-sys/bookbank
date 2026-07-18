@@ -182,7 +182,8 @@ export default function Dashboard() {
       )}
       {editingContent && (
         <ContentModal books={bank.books} genres={bank.genres} allContents={bank.contents} editing={editingContent}
-          onClose={() => setEditingContent(null)} onSave={async () => {}}
+          onClose={() => setEditingContent(null)}
+          onSave={async (data) => { await bank.addContent(data); }}
           onUpdate={async (pageId, data, keepOpen) => { await bank.updateContent(pageId, data); if (!keepOpen) setEditingContent(null); }} />
       )}
       {historyDetail && (

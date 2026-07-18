@@ -45,6 +45,7 @@ export async function GET(req: NextRequest) {
       author: extractText(p.properties.Author),
       tags: extractMultiSelect(p.properties.Tags),
       relIds: extractText(p.properties.RelIds),
+      imageUrl: extractText(p.properties.ImageUrl),
       archived: extractText(p.properties.Archived) === "true",
       createdAt: extractText(p.properties.CreatedAt),
       updatedAt: extractText(p.properties.UpdatedAt),
@@ -75,6 +76,7 @@ export async function POST(req: NextRequest) {
     author: body.author ?? "",
     tags: body.tags ?? [],
     relIds: body.relIds ?? "",
+    imageUrl: body.imageUrl ?? "",
     appId: body.appId ?? "bookbank",
   });
 
@@ -105,6 +107,7 @@ export async function PUT(req: NextRequest) {
       author: body.author,
       tags: body.tags,
       relIds: body.relIds,
+      imageUrl: body.imageUrl,
     });
   }
 

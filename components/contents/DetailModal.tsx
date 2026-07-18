@@ -57,6 +57,12 @@ export default function DetailModal({ content, books, allContents, onClose, onEd
             {cur.tags.map(t => <span key={t} className="px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{t}</span>)}
           </div>
 
+          {cur.imageUrl && (
+            <img src={cur.imageUrl} alt="" className="w-full rounded-xl object-cover max-h-64 border"
+              style={{ borderColor: "var(--border)" }}
+              onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+          )}
+
           {cur.detail && (
             <div className="rounded-xl p-3 border" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
               <p className="text-xs mb-1" style={{ color: "var(--text-faint)" }}>Detail</p>
