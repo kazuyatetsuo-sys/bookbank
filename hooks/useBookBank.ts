@@ -113,21 +113,33 @@ export function useBookBank() {
 
   // ---- contents ----
   const addContent = async (data: Omit<Content, "id" | "title" | "archived" | "createdAt" | "updatedAt">) => {
+    console.log("[addContent] sending data:", data);
     const res = await fetch("/api/notion/contents", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
+    console.log("[addContent] response status:", res.status, "ok:", res.ok);
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      console.error("[addContent] error body:", errBody);
+    }
     if (res.ok) await fetchContents();
     return res.ok;
   };
 
   const updateContent = async (pageId: string, data: Partial<Content>) => {
-    await fetch("/api/notion/contents", {
+    console.log("[updateContent] pageId:", pageId, "data:", data);
+    const res = await fetch("/api/notion/contents", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pageId, ...data }),
     });
+    console.log("[updateContent] response status:", res.status, "ok:", res.ok);
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      console.error("[updateContent] error body:", errBody);
+    }
     await fetchContents();
   };
 

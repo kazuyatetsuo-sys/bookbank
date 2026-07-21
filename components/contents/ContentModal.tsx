@@ -96,12 +96,21 @@ export default function ContentModal({ books, genres, allContents, editing, pres
     .slice(0, 20);
 
   const handleSave = async (andContinue = false) => {
+    console.log("[ContentModal] handleSave called", { andContinue, isEditing, formKeys: Object.keys(form) });
     setSaving(true);
     try {
-      if (isEditing && onUpdate) await onUpdate(editing!.id, form, andContinue);
-      else await onSave(form);
+      if (isEditing && onUpdate) {
+        console.log("[ContentModal] calling onUpdate", editing!.id, form);
+        await onUpdate(editing!.id, form, andContinue);
+        console.log("[ContentModal] onUpdate completed");
+      } else {
+        console.log("[ContentModal] calling onSave", form);
+        await onSave(form);
+        console.log("[ContentModal] onSave completed");
+      }
       if (andContinue) {
         setForcedNew(true);
+        setTagInput("");
         setImageInput("");
         setForm(f => ({
           ...emptyForm,
@@ -116,6 +125,8 @@ export default function ContentModal({ books, genres, allContents, editing, pres
       } else {
         onClose();
       }
+    } catch (e) {
+      console.error("[ContentModal] save error:", e);
     } finally {
       setSaving(false);
     }

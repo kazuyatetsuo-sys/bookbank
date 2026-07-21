@@ -62,25 +62,31 @@ export async function POST(req: NextRequest) {
   }
   const notion = getNotionClient(session.notionAccessToken);
   const body = await req.json();
+  console.log("[POST /api/notion/contents] body:", JSON.stringify(body));
 
-  await createContent(notion, CONTENTS_DB_ID, {
-    contents: body.contents ?? "",
-    detail: body.detail ?? "",
-    memo: body.memo ?? "",
-    bookId: body.bookId ?? "",
-    bookTitle: body.bookTitle ?? "",
-    chapter: body.chapter ?? 0,
-    headline: body.headline ?? 0,
-    order: body.order ?? 0,
-    genre: body.genre ?? "",
-    author: body.author ?? "",
-    tags: body.tags ?? [],
-    relIds: body.relIds ?? "",
-    imageUrl: body.imageUrl ?? "",
-    appId: body.appId ?? "bookbank",
-  });
-
-  return NextResponse.json({ ok: true });
+  try {
+    await createContent(notion, CONTENTS_DB_ID, {
+      contents: body.contents ?? "",
+      detail: body.detail ?? "",
+      memo: body.memo ?? "",
+      bookId: body.bookId ?? "",
+      bookTitle: body.bookTitle ?? "",
+      chapter: body.chapter ?? 0,
+      headline: body.headline ?? 0,
+      order: body.order ?? 0,
+      genre: body.genre ?? "",
+      author: body.author ?? "",
+      tags: body.tags ?? [],
+      relIds: body.relIds ?? "",
+      imageUrl: body.imageUrl ?? "",
+      appId: body.appId ?? "bookbank",
+    });
+    console.log("[POST /api/notion/contents] success");
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    console.error("[POST /api/notion/contents] Notion error:", e);
+    return NextResponse.json({ error: String(e) }, { status: 500 });
+  }
 }
 
 export async function PUT(req: NextRequest) {
@@ -90,26 +96,32 @@ export async function PUT(req: NextRequest) {
   }
   const notion = getNotionClient(session.notionAccessToken);
   const body = await req.json();
+  console.log("[PUT /api/notion/contents] body:", JSON.stringify(body));
 
-  if (body.archive !== undefined) {
-    await archiveContent(notion, body.pageId, body.archive);
-  } else {
-    await updateContent(notion, body.pageId, {
-      contents: body.contents,
-      detail: body.detail,
-      memo: body.memo,
-      bookId: body.bookId,
-      bookTitle: body.bookTitle,
-      chapter: body.chapter,
-      headline: body.headline,
-      order: body.order,
-      genre: body.genre,
-      author: body.author,
-      tags: body.tags,
-      relIds: body.relIds,
-      imageUrl: body.imageUrl,
-    });
+  try {
+    if (body.archive !== undefined) {
+      await archiveContent(notion, body.pageId, body.archive);
+    } else {
+      await updateContent(notion, body.pageId, {
+        contents: body.contents,
+        detail: body.detail,
+        memo: body.memo,
+        bookId: body.bookId,
+        bookTitle: body.bookTitle,
+        chapter: body.chapter,
+        headline: body.headline,
+        order: body.order,
+        genre: body.genre,
+        author: body.author,
+        tags: body.tags,
+        relIds: body.relIds,
+        imageUrl: body.imageUrl,
+      });
+    }
+    console.log("[PUT /api/notion/contents] success");
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    console.error("[PUT /api/notion/contents] Notion error:", e);
+    return NextResponse.json({ error: String(e) }, { status: 500 });
   }
-
-  return NextResponse.json({ ok: true });
 }
