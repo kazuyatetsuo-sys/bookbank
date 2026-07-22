@@ -139,7 +139,8 @@ export default function BookList({ books, genres, contents = [], allContents, on
   const [editHeadlines, setEditHeadlines] = useState<HeadlineEntry[]>([]);
   const [saving, setSaving] = useState(false);
   const [internalSelected, setInternalSelected] = useState<Book | null>(null);
-  const selected = selectedBook !== undefined ? selectedBook : internalSelected;
+  const rawSelected = selectedBook !== undefined ? selectedBook : internalSelected;
+  const selected = rawSelected ? (books.find(b => b.id === rawSelected.id) ?? rawSelected) : null;
   const setSelected = onSelectBook || setInternalSelected;
   const [isbnLoading, setIsbnLoading] = useState(false);
   const [openChapters, setOpenChapters] = useState<Record<number, boolean>>({});

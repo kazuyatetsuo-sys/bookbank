@@ -68,20 +68,26 @@ export async function PUT(req: NextRequest) {
   }
   const notion = getNotionClient(session.notionAccessToken);
   const body = await req.json();
+  console.log("[PUT /api/notion/books] body:", JSON.stringify(body));
 
-  if (body.archive) {
-    await archiveBook(notion, body.pageId);
-  } else {
-    await updateBook(notion, body.pageId, {
-      title: body.title,
-      author: body.author,
-      genre: body.genre,
-      coverUrl: body.coverUrl,
-      memo: body.memo ?? "",
-      chapterTitles: body.chapterTitles ?? "",
-      headlineTitles: body.headlineTitles ?? "",
-    });
+  try {
+    if (body.archive) {
+      await archiveBook(notion, body.pageId);
+    } else {
+      await updateBook(notion, body.pageId, {
+        title: body.title,
+        author: body.author,
+        genre: body.genre,
+        coverUrl: body.coverUrl,
+        memo: body.memo ?? "",
+        chapterTitles: body.chapterTitles ?? "",
+        headlineTitles: body.headlineTitles ?? "",
+      });
+    }
+    console.log("[PUT /api/notion/books] success");
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    console.error("[PUT /api/notion/books] Notion error:", e);
+    return NextResponse.json({ error: String(e) }, { status: 500 });
   }
-
-  return NextResponse.json({ ok: true });
 }
