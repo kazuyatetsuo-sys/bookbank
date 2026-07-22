@@ -41,7 +41,7 @@ export async function createBook(
   }
   if (data.memo) { properties.Memo = { rich_text: [{ text: { content: data.memo } }] }; }
   if (data.chapterTitles !== undefined) { properties.ChapterTitles = { rich_text: [{ text: { content: data.chapterTitles } }] }; }
-  if (data.headlineTitles !== undefined) { properties.HeadlineTitles = { rich_text: [{ text: { content: data.headlineTitles } }] }; }
+  if (data.headlineTitles) { properties.HeadlineTitles = { rich_text: [{ text: { content: data.headlineTitles } }] }; }
   if (data.coverUrl) {
     properties.CoverUrl = { url: data.coverUrl };
   }
@@ -59,7 +59,7 @@ export async function updateBook(
   if (data.genre) properties.Genre = { select: { name: data.genre } };
   if (data.memo !== undefined) properties.Memo = { rich_text: [{ text: { content: data.memo } }] };
   if (data.chapterTitles !== undefined) properties.ChapterTitles = { rich_text: [{ text: { content: data.chapterTitles } }] };
-  if (data.headlineTitles !== undefined) properties.HeadlineTitles = { rich_text: [{ text: { content: data.headlineTitles } }] };
+  if (data.headlineTitles) properties.HeadlineTitles = { rich_text: [{ text: { content: data.headlineTitles } }] };
   if (data.coverUrl !== undefined) properties.CoverUrl = { url: data.coverUrl || null };
   return notion.pages.update({ page_id: pageId, properties });
 }
