@@ -30,6 +30,7 @@ export async function GET() {
       coverUrl: extractText(p.properties.CoverUrl),
       memo: extractText(p.properties.Memo),
       chapterTitles: extractText(p.properties.ChapterTitles),
+      headlineTitles: extractText(p.properties.HeadlineTitles),
       createdAt: extractText(p.properties.CreatedAt),
     };
   });
@@ -54,6 +55,7 @@ export async function POST(req: NextRequest) {
     coverUrl: body.coverUrl,
     memo: body.memo ?? "",
     chapterTitles: body.chapterTitles ?? "",
+    headlineTitles: body.headlineTitles ?? "",
   });
 
   return NextResponse.json({ ok: true, bookId });
@@ -75,8 +77,9 @@ export async function PUT(req: NextRequest) {
       author: body.author,
       genre: body.genre,
       coverUrl: body.coverUrl,
-    memo: body.memo ?? "",
-    chapterTitles: body.chapterTitles ?? "",
+      memo: body.memo ?? "",
+      chapterTitles: body.chapterTitles ?? "",
+      headlineTitles: body.headlineTitles ?? "",
     });
   }
 

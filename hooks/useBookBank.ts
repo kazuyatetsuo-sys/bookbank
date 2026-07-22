@@ -10,6 +10,7 @@ export interface Book {
   coverUrl: string;
   memo: string;
   chapterTitles: string;
+  headlineTitles: string;
   createdAt: string;
 }
 

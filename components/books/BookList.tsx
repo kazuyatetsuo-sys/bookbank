@@ -20,6 +20,7 @@ interface Props {
 }
 
 type ChapterEntry = { num: string; title: string };
+type HeadlineEntry = { ch: number; hl: number; title: string };
 
 function parseChapterTitles(raw: string): ChapterEntry[] {
   try { const p = JSON.parse(raw); if (Array.isArray(p)) return p; } catch {}
@@ -27,6 +28,13 @@ function parseChapterTitles(raw: string): ChapterEntry[] {
 }
 function stringifyChapterTitles(e: ChapterEntry[]): string {
   return JSON.stringify(e.filter(x => x.num || x.title));
+}
+function parseHeadlineTitles(raw: string): HeadlineEntry[] {
+  try { const p = JSON.parse(raw); if (Array.isArray(p)) return p; } catch {}
+  return [];
+}
+function stringifyHeadlineTitles(e: HeadlineEntry[]): string {
+  return JSON.stringify(e.filter(x => x.title));
 }
 function toIsbn13(isbn: string): string {
   const c = isbn.replace(/[-\s]/g, "");
@@ -88,13 +96,47 @@ function ChapterList({ chapters, onChange }: { chapters: ChapterEntry[]; onChang
   );
 }
 
+function HeadlineList({ headlines, onChange }: { headlines: HeadlineEntry[]; onChange: (h: HeadlineEntry[]) => void }) {
+  const move = (i: number, dir: number) => {
+    const next = [...headlines]; const j = i + dir;
+    if (j < 0 || j >= next.length) return;
+    [next[i], next[j]] = [next[j], next[i]]; onChange(next);
+  };
+  return (
+    <div>
+      <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>HL目次</p>
+      <div className="space-y-2">
+        {headlines.map((hl, i) => (
+          <div key={i} className="flex gap-2 items-center rounded-lg px-2 py-1 border" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+            <div className="flex flex-col gap-0.5">
+              <button onClick={() => move(i, -1)} disabled={i === 0} className="text-xs leading-none px-1 disabled:opacity-30" style={{ color: "var(--text-faint)" }}>▲</button>
+              <button onClick={() => move(i, 1)} disabled={i === headlines.length - 1} className="text-xs leading-none px-1 disabled:opacity-30" style={{ color: "var(--text-faint)" }}>▼</button>
+            </div>
+            <input type="number" min={1} max={99} className="w-12 rounded-lg p-2 text-sm border text-center focus:outline-none" style={inpStyle}
+              value={hl.ch} onChange={e => onChange(headlines.map((x, j) => j === i ? { ...x, ch: Number(e.target.value) } : x))} placeholder="Ch" />
+            <input type="number" min={1} max={99} className="w-12 rounded-lg p-2 text-sm border text-center focus:outline-none" style={inpStyle}
+              value={hl.hl} onChange={e => onChange(headlines.map((x, j) => j === i ? { ...x, hl: Number(e.target.value) } : x))} placeholder="HL" />
+            <input className="flex-1 rounded-lg p-2 text-sm border focus:outline-none" style={inpStyle}
+              value={hl.title} onChange={e => onChange(headlines.map((x, j) => j === i ? { ...x, title: e.target.value } : x))} placeholder="ヘッドラインタイトル" />
+            <button onClick={() => onChange(headlines.filter((_, j) => j !== i))} className="text-sm px-2" style={{ color: "var(--text-faint)" }}>×</button>
+          </div>
+        ))}
+      </div>
+      <button onClick={() => onChange([...headlines, { ch: 1, hl: headlines.length + 1, title: "" }])}
+        className="mt-2 text-sm px-3 py-1.5 rounded-lg border" style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>+ HLを追加</button>
+    </div>
+  );
+}
+
 export default function BookList({ books, genres, contents = [], allContents, onAdd, onUpdate, onDelete, onUpdateContent, onArchiveContent, onAddContent, selectedBook, onSelectBook }: Props) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ ...emptyForm });
   const [chapters, setChapters] = useState<ChapterEntry[]>([]);
+  const [headlines, setHeadlines] = useState<HeadlineEntry[]>([]);
   const [editing, setEditing] = useState<Book | null>(null);
   const [editForm, setEditForm] = useState({ ...emptyForm });
   const [editChapters, setEditChapters] = useState<ChapterEntry[]>([]);
+  const [editHeadlines, setEditHeadlines] = useState<HeadlineEntry[]>([]);
   const [saving, setSaving] = useState(false);
   const [internalSelected, setInternalSelected] = useState<Book | null>(null);
   const selected = selectedBook !== undefined ? selectedBook : internalSelected;
@@ -115,18 +157,19 @@ export default function BookList({ books, genres, contents = [], allContents, on
   };
   const handleAdd = async () => {
     if (!form.title.trim()) return; setSaving(true);
-    await onAdd({ title: form.title, author: form.author, genre: form.genre, coverUrl: form.coverUrl, memo: form.memo, chapterTitles: stringifyChapterTitles(chapters) });
-    setForm({ ...emptyForm }); setChapters([]); setShowAdd(false); setSaving(false);
+    await onAdd({ title: form.title, author: form.author, genre: form.genre, coverUrl: form.coverUrl, memo: form.memo, chapterTitles: stringifyChapterTitles(chapters), headlineTitles: stringifyHeadlineTitles(headlines) });
+    setForm({ ...emptyForm }); setChapters([]); setHeadlines([]); setShowAdd(false); setSaving(false);
   };
   const handleUpdate = async () => {
     if (!editing) return; setSaving(true);
-    await onUpdate(editing.id, { title: editForm.title, author: editForm.author, genre: editForm.genre, coverUrl: editForm.coverUrl, memo: editForm.memo, chapterTitles: stringifyChapterTitles(editChapters) });
+    await onUpdate(editing.id, { title: editForm.title, author: editForm.author, genre: editForm.genre, coverUrl: editForm.coverUrl, memo: editForm.memo, chapterTitles: stringifyChapterTitles(editChapters), headlineTitles: stringifyHeadlineTitles(editHeadlines) });
     setEditing(null); setSaving(false);
   };
   const startEdit = (b: Book) => {
     setEditing(b);
     setEditForm({ title: b.title, author: b.author, genre: b.genre, coverUrl: b.coverUrl, isbn: "", memo: b.memo || "" });
     setEditChapters(parseChapterTitles(b.chapterTitles || ""));
+    setEditHeadlines(parseHeadlineTitles(b.headlineTitles || ""));
   };
 
   const allGenres = [...new Set(books.map(b => b.genre || "未分類"))].sort();
@@ -225,6 +268,8 @@ export default function BookList({ books, genres, contents = [], allContents, on
                 const chs = [...new Set(bc.map(c => c.chapter))].sort((a, b) => a - b);
                 const chapterTitleMap: Record<string, string> = {};
                 parseChapterTitles(selected.chapterTitles || "").forEach(e => { chapterTitleMap[e.num] = e.title; });
+                const headlineTitleMap: Record<string, string> = {};
+                parseHeadlineTitles(selected.headlineTitles || "").forEach(e => { headlineTitleMap[`${e.ch}-${e.hl}`] = e.title; });
                 if (!bc.length) return <p className="text-sm text-center py-8" style={{ color: "var(--text-faint)" }}>コンテンツがありません</p>;
                 return (
                   <div className="space-y-1.5">
@@ -233,7 +278,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
                       const chContents = bc.filter(c => c.chapter === ch);
                       const isOpen = openChapters[ch];
                       const chTitle = chapterTitleMap[String(ch)] || "";
-                      const headlines = [...new Set(chContents.map(c => c.headline))].sort((a, b) => a - b);
+                      const hlNums = [...new Set(chContents.map(c => c.headline))].sort((a, b) => a - b);
                       return (
                         <div key={ch}>
                           <button onClick={() => setOpenChapters(prev => ({ ...prev, [ch]: !prev[ch] }))}
@@ -250,10 +295,11 @@ export default function BookList({ books, genres, contents = [], allContents, on
                           </button>
                           {isOpen && (
                             <div className="mt-1 pl-2 space-y-1.5">
-                              {headlines.map(hl => {
+                              {hlNums.map(hl => {
                                 const hlKey = `${ch}-${hl}`;
                                 const hlContents = chContents.filter(c => c.headline === hl);
                                 const isHlOpen = openHeadlines[hlKey] ?? false;
+                                const hlTitle = headlineTitleMap[hlKey] || "";
                                 return (
                                   <div key={hl}>
                                     <button
@@ -261,6 +307,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
                                       className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition hover:opacity-70"
                                       style={{ background: "var(--surface)" }}>
                                       <span className="text-xs font-mono" style={{ color: "var(--amber)" }}>HL.{p(hl)}</span>
+                                      {hlTitle && <span className="text-xs truncate" style={{ color: "var(--text-muted)" }}>{hlTitle}</span>}
                                       <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
                                       <span className="text-xs flex-shrink-0" style={{ color: "var(--text-faint)" }}>{hlContents.length}件</span>
                                       <span className="text-xs flex-shrink-0" style={{ color: "var(--text-faint)" }}>{isHlOpen ? "▲" : "▼"}</span>
@@ -328,6 +375,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
             <input className={inp} style={inpStyle} placeholder="ジャンル" value={form.genre} onChange={e => setForm(f => ({ ...f, genre: e.target.value }))} />
             <textarea className={`${inp} h-20 resize-none`} style={inpStyle} placeholder="書籍メモ" value={form.memo} onChange={e => setForm(f => ({ ...f, memo: e.target.value }))} />
             <ChapterList chapters={chapters} onChange={setChapters} />
+            <HeadlineList headlines={headlines} onChange={setHeadlines} />
             {form.coverUrl && <div className="flex justify-center"><img src={form.coverUrl} alt="" className="h-20 object-cover rounded-lg" /></div>}
             <div className="flex gap-2 pt-1">
               <button onClick={() => setShowAdd(false)} className="flex-1 py-2.5 rounded-xl text-sm border" style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>キャンセル</button>
@@ -357,6 +405,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
             <input className={inp} style={inpStyle} placeholder="ジャンル" value={editForm.genre} onChange={e => setEditForm(f => ({ ...f, genre: e.target.value }))} />
             <textarea className={`${inp} h-20 resize-none`} style={inpStyle} placeholder="書籍メモ" value={editForm.memo} onChange={e => setEditForm(f => ({ ...f, memo: e.target.value }))} />
             <ChapterList chapters={editChapters} onChange={setEditChapters} />
+            <HeadlineList headlines={editHeadlines} onChange={setEditHeadlines} />
             {editForm.coverUrl && <div className="flex justify-center"><img src={editForm.coverUrl} alt="" className="h-20 object-cover rounded-lg" /></div>}
             <div className="flex gap-2 pt-1">
               <button onClick={() => setEditing(null)} className="flex-1 py-2.5 rounded-xl text-sm border" style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>キャンセル</button>

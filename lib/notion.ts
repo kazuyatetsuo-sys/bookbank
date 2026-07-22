@@ -26,6 +26,7 @@ export async function createBook(
     coverUrl?: string;
     memo?: string;
     chapterTitles?: string;
+    headlineTitles?: string;
   }
 ) {
   const properties: Parameters<typeof notion.pages.create>[0]["properties"] = {
@@ -40,6 +41,7 @@ export async function createBook(
   }
   if (data.memo) { properties.Memo = { rich_text: [{ text: { content: data.memo } }] }; }
   if (data.chapterTitles !== undefined) { properties.ChapterTitles = { rich_text: [{ text: { content: data.chapterTitles } }] }; }
+  if (data.headlineTitles !== undefined) { properties.HeadlineTitles = { rich_text: [{ text: { content: data.headlineTitles } }] }; }
   if (data.coverUrl) {
     properties.CoverUrl = { url: data.coverUrl };
   }
@@ -49,7 +51,7 @@ export async function createBook(
 export async function updateBook(
   notion: Client,
   pageId: string,
-  data: { title?: string; author?: string; genre?: string; coverUrl?: string; memo?: string; chapterTitles?: string }
+  data: { title?: string; author?: string; genre?: string; coverUrl?: string; memo?: string; chapterTitles?: string; headlineTitles?: string }
 ) {
   const properties: Parameters<typeof notion.pages.create>[0]["properties"] = {};
   if (data.title) properties.Title = { title: [{ text: { content: data.title } }] };
@@ -57,6 +59,7 @@ export async function updateBook(
   if (data.genre) properties.Genre = { select: { name: data.genre } };
   if (data.memo !== undefined) properties.Memo = { rich_text: [{ text: { content: data.memo } }] };
   if (data.chapterTitles !== undefined) properties.ChapterTitles = { rich_text: [{ text: { content: data.chapterTitles } }] };
+  if (data.headlineTitles !== undefined) properties.HeadlineTitles = { rich_text: [{ text: { content: data.headlineTitles } }] };
   if (data.coverUrl !== undefined) properties.CoverUrl = { url: data.coverUrl || null };
   return notion.pages.update({ page_id: pageId, properties });
 }
