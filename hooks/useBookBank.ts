@@ -95,11 +95,19 @@ export function useBookBank() {
   };
 
   const updateBook = async (pageId: string, data: Partial<Book>) => {
-    await fetch("/api/notion/books", {
+    console.log("[updateBook] pageId:", pageId, "data:", data);
+    const res = await fetch("/api/notion/books", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pageId, ...data }),
     });
+    console.log("[updateBook] response status:", res.status, "ok:", res.ok);
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      const msg = errBody.error || `HTTP ${res.status}`;
+      console.error("[updateBook] error:", msg);
+      throw new Error(msg);
+    }
     await fetchBooks();
   };
 

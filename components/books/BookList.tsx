@@ -138,6 +138,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
   const [editChapters, setEditChapters] = useState<ChapterEntry[]>([]);
   const [editHeadlines, setEditHeadlines] = useState<HeadlineEntry[]>([]);
   const [saving, setSaving] = useState(false);
+  const [bookError, setBookError] = useState<string | null>(null);
   const [internalSelected, setInternalSelected] = useState<Book | null>(null);
   const rawSelected = selectedBook !== undefined ? selectedBook : internalSelected;
   const selected = rawSelected ? (books.find(b => b.id === rawSelected.id) ?? rawSelected) : null;
@@ -162,9 +163,21 @@ export default function BookList({ books, genres, contents = [], allContents, on
     setForm({ ...emptyForm }); setChapters([]); setHeadlines([]); setShowAdd(false); setSaving(false);
   };
   const handleUpdate = async () => {
-    if (!editing) return; setSaving(true);
-    await onUpdate(editing.id, { title: editForm.title, author: editForm.author, genre: editForm.genre, coverUrl: editForm.coverUrl, memo: editForm.memo, chapterTitles: stringifyChapterTitles(editChapters), headlineTitles: stringifyHeadlineTitles(editHeadlines) });
-    setEditing(null); setSaving(false);
+    if (!editing) return;
+    setSaving(true);
+    setBookError(null);
+    const headlineTitlesJson = stringifyHeadlineTitles(editHeadlines);
+    console.log("[handleUpdate] editHeadlines:", editHeadlines, "headlineTitles JSON:", headlineTitlesJson);
+    try {
+      await onUpdate(editing.id, { title: editForm.title, author: editForm.author, genre: editForm.genre, coverUrl: editForm.coverUrl, memo: editForm.memo, chapterTitles: stringifyChapterTitles(editChapters), headlineTitles: headlineTitlesJson });
+      setEditing(null);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("[handleUpdate] error:", msg);
+      setBookError(msg);
+    } finally {
+      setSaving(false);
+    }
   };
   const startEdit = (b: Book) => {
     setEditing(b);
@@ -408,6 +421,11 @@ export default function BookList({ books, genres, contents = [], allContents, on
             <ChapterList chapters={editChapters} onChange={setEditChapters} />
             <HeadlineList headlines={editHeadlines} onChange={setEditHeadlines} />
             {editForm.coverUrl && <div className="flex justify-center"><img src={editForm.coverUrl} alt="" className="h-20 object-cover rounded-lg" /></div>}
+            {bookError && (
+              <div className="px-3 py-2 rounded-xl text-sm border" style={{ background: "rgba(239,68,68,0.1)", borderColor: "rgba(239,68,68,0.4)", color: "#f87171" }}>
+                保存エラー: {bookError}
+              </div>
+            )}
             <div className="flex gap-2 pt-1">
               <button onClick={() => setEditing(null)} className="flex-1 py-2.5 rounded-xl text-sm border" style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>キャンセル</button>
               <button onClick={handleUpdate} disabled={saving} className="flex-1 py-2.5 rounded-xl font-semibold text-sm disabled:opacity-50" style={{ background: "var(--amber)", color: "#fff" }}>{saving ? "保存中…" : "更新"}</button>
