@@ -90,7 +90,11 @@ function ChapterList({ chapters, onChange }: { chapters: ChapterEntry[]; onChang
           </div>
         ))}
       </div>
-      <button onClick={() => onChange([...chapters, { num: String(chapters.length + 1), title: "" }])}
+      <button onClick={() => {
+          const last = chapters[chapters.length - 1];
+          const nextNum = last ? String(Number(last.num) + 1) : "1";
+          onChange([...chapters, { num: nextNum, title: "" }]);
+        }}
         className="mt-2 text-sm px-3 py-1.5 rounded-lg border" style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>+ Chapterを追加</button>
     </div>
   );
@@ -122,7 +126,12 @@ function HeadlineList({ headlines, onChange }: { headlines: HeadlineEntry[]; onC
           </div>
         ))}
       </div>
-      <button onClick={() => onChange([...headlines, { ch: 1, hl: headlines.length + 1, title: "" }])}
+      <button onClick={() => {
+          const last = headlines[headlines.length - 1];
+          const nextCh = last ? last.ch : 1;
+          const nextHl = last ? last.hl + 1 : 1;
+          onChange([...headlines, { ch: nextCh, hl: nextHl, title: "" }]);
+        }}
         className="mt-2 text-sm px-3 py-1.5 rounded-lg border" style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>+ HLを追加</button>
     </div>
   );
