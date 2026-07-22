@@ -25,6 +25,7 @@ export default function ContentModal({ books, genres, allContents, editing, pres
   const [form, setForm] = useState({ ...emptyForm });
   const [tagInput, setTagInput] = useState("");
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [relSearch, setRelSearch] = useState("");
   const [forcedNew, setForcedNew] = useState(false);
   const [imageInput, setImageInput] = useState("");
@@ -98,6 +99,7 @@ export default function ContentModal({ books, genres, allContents, editing, pres
   const handleSave = async (andContinue = false) => {
     console.log("[ContentModal] handleSave called", { andContinue, isEditing, formKeys: Object.keys(form) });
     setSaving(true);
+    setSaveError(null);
     try {
       if (isEditing && onUpdate) {
         console.log("[ContentModal] calling onUpdate", editing!.id, form);
@@ -126,7 +128,9 @@ export default function ContentModal({ books, genres, allContents, editing, pres
         onClose();
       }
     } catch (e) {
-      console.error("[ContentModal] save error:", e);
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("[ContentModal] save error:", msg);
+      setSaveError(msg);
     } finally {
       setSaving(false);
     }
@@ -270,6 +274,12 @@ export default function ContentModal({ books, genres, allContents, editing, pres
           </div>
           {relIdList.length > 0 && <p className="text-xs mt-1" style={{ color: "var(--amber)" }}>{relIdList.length}件選択中</p>}
         </div>
+
+        {saveError && (
+          <div className="px-3 py-2 rounded-xl text-sm border" style={{ background: "rgba(239,68,68,0.1)", borderColor: "rgba(239,68,68,0.4)", color: "#f87171" }}>
+            保存エラー: {saveError}
+          </div>
+        )}
 
         <div className="flex gap-3 pt-2">
           <button onClick={onClose} className="flex-1 py-3 rounded-xl text-sm border"

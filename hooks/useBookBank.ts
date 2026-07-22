@@ -122,10 +122,12 @@ export function useBookBank() {
     console.log("[addContent] response status:", res.status, "ok:", res.ok);
     if (!res.ok) {
       const errBody = await res.json().catch(() => ({}));
-      console.error("[addContent] error body:", errBody);
+      const msg = errBody.error || `HTTP ${res.status}`;
+      console.error("[addContent] error:", msg);
+      throw new Error(msg);
     }
-    if (res.ok) await fetchContents();
-    return res.ok;
+    await fetchContents();
+    return true;
   };
 
   const updateContent = async (pageId: string, data: Partial<Content>) => {
@@ -138,7 +140,9 @@ export function useBookBank() {
     console.log("[updateContent] response status:", res.status, "ok:", res.ok);
     if (!res.ok) {
       const errBody = await res.json().catch(() => ({}));
-      console.error("[updateContent] error body:", errBody);
+      const msg = errBody.error || `HTTP ${res.status}`;
+      console.error("[updateContent] error:", msg);
+      throw new Error(msg);
     }
     await fetchContents();
   };
