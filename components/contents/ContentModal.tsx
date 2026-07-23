@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Book, Content } from "@/hooks/useBookBank";
 
 interface Props {
@@ -30,6 +30,8 @@ export default function ContentModal({ books, genres, allContents, editing, pres
   const [forcedNew, setForcedNew] = useState(false);
   const [imageInput, setImageInput] = useState("");
   const [imageConverting, setImageConverting] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const handleSaveRef = useRef<(andContinue?: boolean) => Promise<void>>(async () => {});
 
   const allTags = [...new Set(allContents.flatMap(c => c.tags))].sort();
   const tagSuggestions = tagInput.trim()
@@ -124,6 +126,7 @@ export default function ContentModal({ books, genres, allContents, editing, pres
           headline: f.headline,
           order: f.order + 1,
         }));
+        if (scrollRef.current) scrollRef.current.scrollTop = 0;
       } else {
         onClose();
       }
@@ -136,10 +139,22 @@ export default function ContentModal({ books, genres, allContents, editing, pres
     }
   };
 
+  handleSaveRef.current = handleSave;
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!e.metaKey) return;
+      if (e.key === "Enter") { e.preventDefault(); handleSaveRef.current(true); }
+      else if (e.key === "s") { e.preventDefault(); handleSaveRef.current(); }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={onClose}>
-      <div className="relative w-full sm:max-w-2xl border rounded-2xl overflow-y-auto max-h-[90vh] p-6 space-y-5"
+      <div ref={scrollRef} className="relative w-full sm:max-w-2xl border rounded-2xl overflow-y-auto max-h-[90vh] p-6 space-y-5"
         style={{ background: "var(--bg2)", borderColor: "var(--border)" }} onClick={(e) => e.stopPropagation()}>
 
         <div className="flex items-center justify-between">
