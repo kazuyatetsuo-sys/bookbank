@@ -97,13 +97,32 @@ export async function fetchContents(
     filters.push({ property: "Tags", multi_select: { contains: options.tag } });
   }
 
-  const res = await notion.databases.query({
+  const queryBase = {
     database_id: dbId,
     filter: { and: filters } as Parameters<Client["databases"]["query"]>[0]["filter"],
-    sorts: [{ property: "CreatedAt", direction: "descending" }],
-    page_size: options.limit ?? 100,
-  });
-  return res.results;
+    sorts: [{ property: "CreatedAt", direction: "descending" as const }],
+    page_size: 100,
+  };
+
+  // limitが指定されている場合は1回だけ取得
+  if (options.limit) {
+    const res = await notion.databases.query({ ...queryBase, page_size: options.limit });
+    return res.results;
+  }
+
+  // 全件取得: has_moreがある限りcursorで繰り返し取得
+  const allResults: unknown[] = [];
+  let cursor: string | undefined = undefined;
+  do {
+    const res = await notion.databases.query({
+      ...queryBase,
+      ...(cursor ? { start_cursor: cursor } : {}),
+    });
+    allResults.push(...(res.results as never[]));
+    cursor = res.has_more ? (res.next_cursor ?? undefined) : undefined;
+  } while (cursor);
+
+  return allResults;
 }
 
 export async function createContent(

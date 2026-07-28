@@ -20,39 +20,46 @@ export async function GET(req: NextRequest) {
   const notion = getNotionClient(session.notionAccessToken);
   const { searchParams } = new URL(req.url);
 
-  const results = await fetchContents(notion, CONTENTS_DB_ID, {
-    bookId: searchParams.get("bookId") ?? undefined,
-    genre: searchParams.get("genre") ?? undefined,
-    tag: searchParams.get("tag") ?? undefined,
-    archived: searchParams.get("archived") === "true",
-    limit: searchParams.get("limit") ? Number(searchParams.get("limit")) : undefined,
-  });
+  try {
+    const results = await fetchContents(notion, CONTENTS_DB_ID, {
+      bookId: searchParams.get("bookId") ?? undefined,
+      genre: searchParams.get("genre") ?? undefined,
+      tag: searchParams.get("tag") ?? undefined,
+      archived: searchParams.get("archived") === "true",
+      limit: searchParams.get("limit") ? Number(searchParams.get("limit")) : undefined,
+    });
 
-  const contents = results.map((page: unknown) => {
-    const p = page as { id: string; properties: Record<string, unknown> };
-    return {
-      id: p.id,
-      title: extractText(p.properties.Title),
-      contents: extractText(p.properties.Contents),
-      detail: extractText(p.properties.Detail),
-      memo: extractText(p.properties.Memo),
-      bookId: extractText(p.properties.BookId),
-      bookTitle: extractText(p.properties.BookTitle),
-      chapter: Number(extractText(p.properties.Chapter)) || 0,
-      headline: Number(extractText(p.properties.Headline)) || 0,
-      order: Number(extractText(p.properties.order)) || 0,
-      genre: extractText(p.properties.Genre),
-      author: extractText(p.properties.Author),
-      tags: extractMultiSelect(p.properties.Tags),
-      relIds: extractText(p.properties.RelIds),
-      imageUrl: extractText(p.properties.ImageUrl),
-      archived: extractText(p.properties.Archived) === "true",
-      createdAt: extractText(p.properties.CreatedAt),
-      updatedAt: extractText(p.properties.UpdatedAt),
-    };
-  });
+    console.log(`[GET /api/notion/contents] fetched ${results.length} items`);
 
-  return NextResponse.json({ contents });
+    const contents = results.map((page: unknown) => {
+      const p = page as { id: string; properties: Record<string, unknown> };
+      return {
+        id: p.id,
+        title: extractText(p.properties.Title),
+        contents: extractText(p.properties.Contents),
+        detail: extractText(p.properties.Detail),
+        memo: extractText(p.properties.Memo),
+        bookId: extractText(p.properties.BookId),
+        bookTitle: extractText(p.properties.BookTitle),
+        chapter: Number(extractText(p.properties.Chapter)) || 0,
+        headline: Number(extractText(p.properties.Headline)) || 0,
+        order: Number(extractText(p.properties.order)) || 0,
+        genre: extractText(p.properties.Genre),
+        author: extractText(p.properties.Author),
+        tags: extractMultiSelect(p.properties.Tags),
+        relIds: extractText(p.properties.RelIds),
+        imageUrl: extractText(p.properties.ImageUrl),
+        archived: extractText(p.properties.Archived) === "true",
+        createdAt: extractText(p.properties.CreatedAt),
+        updatedAt: extractText(p.properties.UpdatedAt),
+      };
+    });
+
+    return NextResponse.json({ contents });
+  } catch (e) {
+    console.error("[GET /api/notion/contents] error:", e);
+    return NextResponse.json({ error: String(e) }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {
