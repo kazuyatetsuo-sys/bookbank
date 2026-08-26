@@ -4,6 +4,18 @@ export function getNotionClient(accessToken: string) {
   return new Client({ auth: accessToken });
 }
 
+function chunkString(str: string, size: number): string[] {
+  const chunks = [];
+  for (let i = 0; i < str.length; i += size) {
+    chunks.push(str.slice(i, i + size));
+  }
+  return chunks;
+}
+
+function toRichText(str: string) {
+  return { rich_text: chunkString(str, 2000).map((chunk) => ({ text: { content: chunk } })) };
+}
+
 // ==================== Books ====================
 
 export async function fetchBooks(notion: Client, dbId: string) {
@@ -40,8 +52,8 @@ export async function createBook(
     properties.Genre = { select: { name: data.genre } };
   }
   if (data.memo) { properties.Memo = { rich_text: [{ text: { content: data.memo } }] }; }
-  if (data.chapterTitles !== undefined) { properties.ChapterTitles = { rich_text: [{ text: { content: data.chapterTitles } }] }; }
-  if (data.headlineTitles) { properties.HeadlineTitles = { rich_text: [{ text: { content: data.headlineTitles } }] }; }
+  if (data.chapterTitles !== undefined) { properties.ChapterTitles = toRichText(data.chapterTitles); }
+  if (data.headlineTitles) { properties.HeadlineTitles = toRichText(data.headlineTitles); }
   if (data.coverUrl) {
     properties.CoverUrl = { url: data.coverUrl };
   }
@@ -58,8 +70,8 @@ export async function updateBook(
   if (data.author !== undefined) properties.Author = { rich_text: [{ text: { content: data.author } }] };
   if (data.genre) properties.Genre = { select: { name: data.genre } };
   if (data.memo !== undefined) properties.Memo = { rich_text: [{ text: { content: data.memo } }] };
-  if (data.chapterTitles !== undefined) properties.ChapterTitles = { rich_text: [{ text: { content: data.chapterTitles } }] };
-  if (data.headlineTitles) properties.HeadlineTitles = { rich_text: [{ text: { content: data.headlineTitles } }] };
+  if (data.chapterTitles !== undefined) properties.ChapterTitles = toRichText(data.chapterTitles);
+  if (data.headlineTitles) properties.HeadlineTitles = toRichText(data.headlineTitles);
   if (data.coverUrl !== undefined) properties.CoverUrl = { url: data.coverUrl || null };
   return notion.pages.update({ page_id: pageId, properties });
 }
