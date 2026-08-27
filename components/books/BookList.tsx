@@ -268,7 +268,7 @@ function BookContentTree({
         return (
           <div key={ch}>
             <button data-row-key={`ch:${ch}`} onClick={() => setOpenChapters(prev => ({ ...prev, [ch]: !prev[ch] }))}
-              className="w-full flex items-center justify-between pl-3 pr-1 py-3 transition hover:opacity-70"
+              className="w-full flex items-center justify-between text-left pl-3 pr-1 py-3 transition hover:opacity-70"
               style={rowAccent(focusedRowKey === `ch:${ch}`)}>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-mono font-bold" style={{ color: "var(--amber)" }}>Ch.{p(ch)}</span>
@@ -291,7 +291,7 @@ function BookContentTree({
                       <button
                         data-row-key={`hl:${hlKey}`}
                         onClick={() => setOpenHeadlines(prev => ({ ...prev, [hlKey]: !prev[hlKey] }))}
-                        className="w-full flex items-center gap-2 pl-3 pr-1 py-2.5 transition hover:opacity-70"
+                        className="w-full flex items-center gap-2 text-left pl-3 pr-1 py-2.5 transition hover:opacity-70"
                         style={rowAccent(focusedRowKey === `hl:${hlKey}`)}>
                         <span className="text-xs font-mono" style={{ color: "var(--amber)" }}>HL.{p(hl)}</span>
                         {hlTitle && <span className="text-xs truncate" style={{ color: "var(--text-muted)" }}>{hlTitle}</span>}
@@ -552,7 +552,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
     <div className="space-y-4">
       {isDesktop ? (
         <div className="flex" style={{ height: "75vh" }}>
-          <div className="w-1/2 min-w-0 overflow-y-auto overscroll-contain border-r p-4" style={{ borderColor: "var(--border)" }}>
+          <div className="w-1/2 min-w-0 overflow-y-auto overscroll-contain border-r py-4 pr-4" style={{ borderColor: "var(--border)" }}>
             {!selected ? bookListScreen : renderTreeScreen(selected)}
           </div>
           <div className="w-1/2 min-w-0 pl-4">

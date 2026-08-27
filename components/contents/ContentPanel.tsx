@@ -327,16 +327,16 @@ export default function ContentPanel({ content, mode, books, genres, allContents
         )}
 
         {cur.detail && (
-          <div className="rounded-xl p-3 border" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+          <div className="pt-3 border-t" style={{ borderColor: "var(--border)" }}>
             <p className="text-xs mb-1" style={{ color: "var(--text-faint)" }}>Detail</p>
-            <p className="text-sm whitespace-pre-wrap" style={{ color: "var(--text-muted)" }}>{cur.detail}</p>
+            <p className="text-sm whitespace-pre-wrap" style={{ color: "var(--text)" }}>{cur.detail}</p>
           </div>
         )}
 
         {cur.memo && (
-          <div className="rounded-xl p-3 border" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+          <div className="pt-3 border-t" style={{ borderColor: "var(--border)" }}>
             <p className="text-xs mb-1" style={{ color: "var(--text-faint)" }}>memo</p>
-            <p className="text-sm whitespace-pre-wrap" style={{ color: "var(--text-muted)" }}>{cur.memo}</p>
+            <p className="text-sm whitespace-pre-wrap" style={{ color: "var(--text)" }}>{cur.memo}</p>
           </div>
         )}
 
