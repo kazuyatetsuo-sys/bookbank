@@ -136,7 +136,7 @@ export default function ContentPanel({ content, mode, books, genres, allContents
       .slice(0, 20);
 
     return (
-      <div className="h-full overflow-y-auto p-6 space-y-5">
+      <div className="h-full overflow-y-auto overscroll-contain p-6 space-y-5">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold" style={{ color: "var(--text)" }}>編集</h2>
           <button onClick={() => onModeChange("view")} className="text-2xl leading-none" style={{ color: "var(--text-muted)" }}>×</button>
@@ -292,7 +292,7 @@ export default function ContentPanel({ content, mode, books, genres, allContents
     : [];
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto overscroll-contain">
       {stack.length > 1 && (
         <button onClick={() => setStack(s => s.slice(0, -1))}
           className="flex items-center gap-1 px-5 pt-4 text-sm" style={{ color: "var(--text-muted)" }}>

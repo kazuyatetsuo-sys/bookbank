@@ -371,7 +371,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
       {/* iPad 2-pane layout (md: 768px+) */}
       {isDesktop && (
         <div className="flex gap-4" style={{ height: "75vh" }}>
-          <div className="w-1/2 min-w-0 overflow-y-auto rounded-2xl border p-4" style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
+          <div className="w-1/2 min-w-0 overflow-y-auto overscroll-contain rounded-2xl border p-4" style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
             {!selected ? bookListScreen : (
               <div>
                 <button onClick={() => setSelected(null)} className="flex items-center gap-1 text-sm mb-3" style={{ color: "var(--text-muted)" }}>
