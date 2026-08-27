@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { Book, Content } from "@/hooks/useBookBank";
-import DetailModal from "@/components/contents/DetailModal";
 import ContentModal from "@/components/contents/ContentModal";
 import ContentPanel, { PanelMode } from "@/components/contents/ContentPanel";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
@@ -360,8 +359,6 @@ export default function BookList({ books, genres, contents = [], allContents, on
   const [openChapters, setOpenChapters] = useState<Record<number, boolean>>({});
   const [openHeadlines, setOpenHeadlines] = useState<Record<string, boolean>>({});
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
-  const [detailContent, setDetailContent] = useState<Content | null>(null);
-  const [editingContent, setEditingContent] = useState<Content | null>(null);
   const [showAddContent, setShowAddContent] = useState(false);
   const [panelContent, setPanelContent] = useState<Content | null>(null);
   const [panelMode, setPanelMode] = useState<PanelMode>("view");
@@ -463,105 +460,81 @@ export default function BookList({ books, genres, contents = [], allContents, on
     </div>
   );
 
-  return (
-    <div className="space-y-4">
-      {!isDesktop && bookListScreen}
-
-      {/* iPad 2-pane layout (md: 768px+) */}
-      {isDesktop && (
-        <div className="flex" style={{ height: "75vh" }}>
-          <div className="w-1/2 min-w-0 overflow-y-auto overscroll-contain border-r p-4" style={{ borderColor: "var(--border)" }}>
-            {!selected ? bookListScreen : (
-              <div>
-                <button onClick={() => setSelected(null)} className="flex items-center gap-1 text-sm mb-3" style={{ color: "var(--text-muted)" }}>
-                  ← 書籍一覧
-                </button>
-                <div className="flex items-start gap-3 mb-4">
-                  {selected.coverUrl
-                    ? <img src={selected.coverUrl} alt="" className="w-14 h-20 object-cover rounded-xl flex-shrink-0" />
-                    : <div className="w-14 h-20 rounded-xl flex-shrink-0 flex items-center justify-center text-2xl" style={{ background: "var(--amber-bg)", color: "var(--amber)" }}>📖</div>
-                  }
-                  <div className="flex-1">
-                    <h2 className="font-semibold text-base leading-tight" style={{ color: "var(--text)" }}>{selected.title}</h2>
-                    {selected.author && <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>{selected.author}</p>}
-                    {selected.genre && <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{selected.genre}</span>}
-                  </div>
-                  <button onClick={() => setShowAddContent(true)} className="px-3 py-1.5 rounded-lg text-xs border flex-shrink-0"
-                    style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>+ 追加</button>
-                </div>
-                {selected.memo && (
-                  <div className="mb-4 p-3 rounded-xl border" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
-                    <p className="text-xs mb-1" style={{ color: "var(--text-faint)" }}>📝 メモ</p>
-                    <p className="text-sm" style={{ color: "var(--text-muted)" }}>{selected.memo}</p>
-                  </div>
-                )}
-                <BookContentTree book={selected} contents={contents}
-                  openChapters={openChapters} setOpenChapters={setOpenChapters}
-                  openHeadlines={openHeadlines} setOpenHeadlines={setOpenHeadlines}
-                  onSelectContent={(c) => { setPanelContent(c); setPanelMode("view"); }}
-                  selectedContentId={panelContent?.id} enableKeyboardNav />
-              </div>
-            )}
-          </div>
-          <div className="w-1/2 min-w-0 pl-4">
-            <ContentPanel
-              content={panelContent}
-              mode={panelMode}
-              books={books}
-              genres={genres}
-              allContents={allContents || contents}
-              onModeChange={setPanelMode}
-              onUpdate={async (pageId, data) => {
-                await onUpdateContent?.(pageId, data);
-                setPanelContent(prev => prev && prev.id === pageId ? { ...prev, ...data } as Content : prev);
-              }}
-              onArchive={async (pageId, archived) => {
-                await onArchiveContent?.(pageId, archived);
-                setPanelContent(prev => prev && prev.id === pageId ? { ...prev, archived } : prev);
-              }}
-              onBookClick={(b) => { selectBookAndReset(b); setPanelContent(null); }}
-            />
-          </div>
+  const renderTreeScreen = (book: Book) => (
+    <div>
+      <button onClick={() => setSelected(null)} className="flex items-center gap-1 text-sm mb-3" style={{ color: "var(--text-muted)" }}>
+        ← 書籍一覧
+      </button>
+      <div className="flex items-start gap-3 mb-4">
+        {book.coverUrl
+          ? <img src={book.coverUrl} alt="" className="w-14 h-20 object-cover rounded-xl flex-shrink-0" />
+          : <div className="w-14 h-20 rounded-xl flex-shrink-0 flex items-center justify-center text-2xl" style={{ background: "var(--amber-bg)", color: "var(--amber)" }}>📖</div>
+        }
+        <div className="flex-1">
+          <h2 className="font-semibold text-base leading-tight" style={{ color: "var(--text)" }}>{book.title}</h2>
+          {book.author && <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>{book.author}</p>}
+          {book.genre && <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{book.genre}</span>}
+        </div>
+        <button onClick={() => setShowAddContent(true)} className="px-3 py-1.5 rounded-lg text-xs border flex-shrink-0"
+          style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>+ 追加</button>
+      </div>
+      {book.memo && (
+        <div className="mb-4 p-3 rounded-xl border" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+          <p className="text-xs mb-1" style={{ color: "var(--text-faint)" }}>📝 メモ</p>
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>{book.memo}</p>
         </div>
       )}
+      <BookContentTree book={book} contents={contents}
+        openChapters={openChapters} setOpenChapters={setOpenChapters}
+        openHeadlines={openHeadlines} setOpenHeadlines={setOpenHeadlines}
+        onSelectContent={(c) => { setPanelContent(c); setPanelMode("view"); }}
+        selectedContentId={panelContent?.id} enableKeyboardNav />
+    </div>
+  );
 
-      {/* Book Detail (mobile only — replaced by 2-pane layout on iPad) */}
-      {!isDesktop && selected && (
-        <div className={overlay} style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={() => setSelected(null)}>
-          <div className="w-full sm:max-w-lg rounded-2xl max-h-[90vh] overflow-y-auto border m-4"
-            style={{ background: "var(--bg2)", borderColor: "var(--border)" }} onClick={e => e.stopPropagation()}>
-            <div className="p-5">
-              <div className="flex items-start gap-3 mb-5">
-                {selected.coverUrl
-                  ? <img src={selected.coverUrl} alt="" className="w-14 h-20 object-cover rounded-xl flex-shrink-0" />
-                  : <div className="w-14 h-20 rounded-xl flex-shrink-0 flex items-center justify-center text-2xl" style={{ background: "var(--amber-bg)", color: "var(--amber)" }}>📖</div>
-                }
-                <div className="flex-1">
-                  <h2 className="font-semibold text-base leading-tight" style={{ color: "var(--text)" }}>{selected.title}</h2>
-                  {selected.author && <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>{selected.author}</p>}
-                  {selected.genre && <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{selected.genre}</span>}
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <button onClick={() => setShowAddContent(true)} className="px-3 py-1.5 rounded-lg text-xs border"
-                    style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>+ 追加</button>
-                  <button onClick={() => setSelected(null)} className="text-xl" style={{ color: "var(--text-faint)" }}>×</button>
-                </div>
-              </div>
+  const contentPanel = (fullHeight: boolean) => (
+    <ContentPanel
+      fullHeight={fullHeight}
+      content={panelContent}
+      mode={panelMode}
+      books={books}
+      genres={genres}
+      allContents={allContents || contents}
+      onModeChange={setPanelMode}
+      onUpdate={async (pageId, data) => {
+        await onUpdateContent?.(pageId, data);
+        setPanelContent(prev => prev && prev.id === pageId ? { ...prev, ...data } as Content : prev);
+      }}
+      onArchive={async (pageId, archived) => {
+        await onArchiveContent?.(pageId, archived);
+        setPanelContent(prev => prev && prev.id === pageId ? { ...prev, archived } : prev);
+      }}
+      onBookClick={(b) => { selectBookAndReset(b); setPanelContent(null); }}
+    />
+  );
 
-              {selected.memo && (
-                <div className="mb-4 p-3 rounded-xl border" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
-                  <p className="text-xs mb-1" style={{ color: "var(--text-faint)" }}>📝 メモ</p>
-                  <p className="text-sm" style={{ color: "var(--text-muted)" }}>{selected.memo}</p>
-                </div>
-              )}
-
-              <BookContentTree book={selected} contents={contents}
-                openChapters={openChapters} setOpenChapters={setOpenChapters}
-                openHeadlines={openHeadlines} setOpenHeadlines={setOpenHeadlines}
-                onSelectContent={(c) => setDetailContent(c)} />
-            </div>
+  return (
+    <div className="space-y-4">
+      {isDesktop ? (
+        <div className="flex" style={{ height: "75vh" }}>
+          <div className="w-1/2 min-w-0 overflow-y-auto overscroll-contain border-r p-4" style={{ borderColor: "var(--border)" }}>
+            {!selected ? bookListScreen : renderTreeScreen(selected)}
+          </div>
+          <div className="w-1/2 min-w-0 pl-4">
+            {contentPanel(true)}
           </div>
         </div>
+      ) : panelContent ? (
+        <div>
+          <button onClick={() => setPanelContent(null)} className="flex items-center gap-1 text-sm mb-3" style={{ color: "var(--text-muted)" }}>
+            ← 戻る
+          </button>
+          {contentPanel(false)}
+        </div>
+      ) : selected ? (
+        renderTreeScreen(selected)
+      ) : (
+        bookListScreen
       )}
 
       {/* Add Book Modal */}
@@ -646,27 +619,6 @@ export default function BookList({ books, genres, contents = [], allContents, on
               });
             }
           }}
-        />
-      )}
-
-      {/* Content Detail (mobile only) */}
-      {!isDesktop && detailContent && onUpdateContent && onArchiveContent && (
-        <DetailModal
-          content={detailContent} books={books} allContents={allContents || contents}
-          onClose={() => setDetailContent(null)}
-          onEdit={() => { setEditingContent(detailContent); setDetailContent(null); }}
-          onArchive={() => { onArchiveContent(detailContent.id, !detailContent.archived); setDetailContent(null); }}
-          onBookClick={(b) => { setDetailContent(null); selectBookAndReset(b); }}
-        />
-      )}
-
-      {/* Edit Content (mobile only) */}
-      {!isDesktop && editingContent && onUpdateContent && (
-        <ContentModal
-          books={books} genres={genres} allContents={allContents || contents} editing={editingContent}
-          onClose={() => setEditingContent(null)}
-          onSave={async (data) => { if (onAddContent) await onAddContent(data); }}
-          onUpdate={async (pageId, data, keepOpen) => { await onUpdateContent(pageId, data); if (!keepOpen) setEditingContent(null); }}
         />
       )}
     </div>
