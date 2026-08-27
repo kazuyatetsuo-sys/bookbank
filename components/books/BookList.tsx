@@ -253,8 +253,12 @@ function BookContentTree({
   }, [enableKeyboardNav, rows, focusedRowKey, openChapters, openHeadlines, onSelectContent, setOpenChapters, setOpenHeadlines]);
 
   if (!bc.length) return <p className="text-sm text-center py-8" style={{ color: "var(--text-faint)" }}>コンテンツがありません</p>;
+  const rowAccent = (active: boolean) => ({
+    borderLeft: active ? "3px solid var(--amber)" : "3px solid transparent",
+    borderBottom: "1px solid var(--border)",
+  });
   return (
-    <div className="space-y-1.5">
+    <div>
       <p className="text-xs mb-3" style={{ color: "var(--text-faint)" }}>目次</p>
       {chs.map(ch => {
         const chContents = bc.filter(c => c.chapter === ch);
@@ -264,10 +268,8 @@ function BookContentTree({
         return (
           <div key={ch}>
             <button data-row-key={`ch:${ch}`} onClick={() => setOpenChapters(prev => ({ ...prev, [ch]: !prev[ch] }))}
-              className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border transition hover:opacity-70"
-              style={focusedRowKey === `ch:${ch}`
-                ? { background: "var(--surface)", borderColor: "var(--amber)" }
-                : { background: "var(--surface)", borderColor: "transparent" }}>
+              className="w-full flex items-center justify-between pl-3 pr-1 py-3 transition hover:opacity-70"
+              style={rowAccent(focusedRowKey === `ch:${ch}`)}>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-mono font-bold" style={{ color: "var(--amber)" }}>Ch.{p(ch)}</span>
                 <span className="text-sm" style={{ color: "var(--text)" }}>{chTitle || `Chapter ${p(ch)}`}</span>
@@ -278,7 +280,7 @@ function BookContentTree({
               </div>
             </button>
             {isOpen && (
-              <div className="mt-1 pl-2 space-y-1.5">
+              <div className="pl-4">
                 {hlNums.map(hl => {
                   const hlKey = `${ch}-${hl}`;
                   const hlContents = chContents.filter(c => c.headline === hl);
@@ -289,24 +291,20 @@ function BookContentTree({
                       <button
                         data-row-key={`hl:${hlKey}`}
                         onClick={() => setOpenHeadlines(prev => ({ ...prev, [hlKey]: !prev[hlKey] }))}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg border transition hover:opacity-70"
-                        style={focusedRowKey === `hl:${hlKey}`
-                          ? { background: "var(--surface)", borderColor: "var(--amber)" }
-                          : { background: "var(--surface)", borderColor: "transparent" }}>
+                        className="w-full flex items-center gap-2 pl-3 pr-1 py-2.5 transition hover:opacity-70"
+                        style={rowAccent(focusedRowKey === `hl:${hlKey}`)}>
                         <span className="text-xs font-mono" style={{ color: "var(--amber)" }}>HL.{p(hl)}</span>
                         {hlTitle && <span className="text-xs truncate" style={{ color: "var(--text-muted)" }}>{hlTitle}</span>}
-                        <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
+                        <div className="flex-1" />
                         <span className="text-xs flex-shrink-0" style={{ color: "var(--text-faint)" }}>{hlContents.length}件</span>
                         <span className="text-xs flex-shrink-0" style={{ color: "var(--text-faint)" }}>{isHlOpen ? "▲" : "▼"}</span>
                       </button>
                       {isHlOpen && (
-                        <div className="mt-1 space-y-1.5">
+                        <div className="pl-4">
                           {hlContents.map((c) => (
                             <button key={c.id} data-row-key={`c:${c.id}`} onClick={() => onSelectContent(c)}
-                              className="w-full text-left px-3 py-2.5 rounded-lg border transition hover:opacity-70"
-                              style={c.id === selectedContentId
-                                ? { background: "var(--amber-bg)", borderColor: "var(--amber-border)" }
-                                : { background: "var(--surface)", borderColor: "var(--border)" }}>
+                              className="w-full text-left pl-3 pr-1 py-3 transition hover:opacity-70"
+                              style={rowAccent(c.id === selectedContentId)}>
                               <div className="flex items-start gap-2">
                                 <span className="text-xs flex-shrink-0 mt-0.5 font-mono" style={{ color: "var(--text-faint)" }}>#{c.order}</span>
                                 <div className="flex-1 min-w-0">
