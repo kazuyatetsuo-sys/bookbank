@@ -160,6 +160,34 @@ function BookContentTree({
   const headlineTitleMap: Record<string, string> = {};
   parseHeadlineTitles(book.headlineTitles || "").forEach(e => { headlineTitleMap[`${e.ch}-${e.hl}`] = e.title; });
 
+  const [focusedRowKey, setFocusedRowKey] = useState<string | null>(selectedContentId ? `c:${selectedContentId}` : null);
+  useEffect(() => {
+    if (selectedContentId) setFocusedRowKey(`c:${selectedContentId}`);
+  }, [selectedContentId]);
+
+  // 現在開いている行だけを対象にした、上から下へのフラットな行リスト（Chapter見出し→開いていればHL見出し→開いていればコンテンツ）
+  type Row = { type: "chapter"; ch: number } | { type: "hl"; ch: number; hl: number } | { type: "content"; content: Content };
+  const rows: Row[] = [];
+  for (const ch of chs) {
+    rows.push({ type: "chapter", ch });
+    if (openChapters[ch]) {
+      const chContents = bc.filter(c => c.chapter === ch);
+      const hlNums = [...new Set(chContents.map(c => c.headline))].sort((a, b) => a - b);
+      for (const hl of hlNums) {
+        rows.push({ type: "hl", ch, hl });
+        if (openHeadlines[`${ch}-${hl}`]) {
+          for (const c of chContents.filter(c => c.headline === hl)) rows.push({ type: "content", content: c });
+        }
+      }
+    }
+  }
+  const rowKey = (r: Row) => r.type === "chapter" ? `ch:${r.ch}` : r.type === "hl" ? `hl:${r.ch}-${r.hl}` : `c:${r.content.id}`;
+  const scrollRowIntoView = (key: string) => {
+    requestAnimationFrame(() => {
+      document.querySelector(`[data-row-key="${CSS.escape(key)}"]`)?.scrollIntoView({ block: "nearest" });
+    });
+  };
+
   useEffect(() => {
     if (!enableKeyboardNav) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -167,23 +195,62 @@ function BookContentTree({
       const target = e.target as HTMLElement;
       const tag = target.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable) return;
-      if (!bc.length) return;
-      const curIdx = selectedContentId ? bc.findIndex(c => c.id === selectedContentId) : -1;
-      const forward = e.key === "ArrowDown" || e.key === "ArrowRight";
-      const nextIdx = curIdx < 0 ? 0 : forward ? Math.min(curIdx + 1, bc.length - 1) : Math.max(curIdx - 1, 0);
-      if (nextIdx === curIdx) return;
+      if (!rows.length) return;
+      const curIdx = focusedRowKey ? rows.findIndex(r => rowKey(r) === focusedRowKey) : -1;
       e.preventDefault();
-      const next = bc[nextIdx];
-      setOpenChapters(prev => ({ ...prev, [next.chapter]: true }));
-      setOpenHeadlines(prev => ({ ...prev, [`${next.chapter}-${next.headline}`]: true }));
-      onSelectContent(next);
-      requestAnimationFrame(() => {
-        document.querySelector(`[data-content-id="${next.id}"]`)?.scrollIntoView({ block: "nearest" });
-      });
+
+      // ↑↓: 現在表示中の行の間を1つずつ移動（折りたたまれた中へは踏み込まない）
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        const nextIdx = curIdx < 0 ? 0 : e.key === "ArrowDown" ? Math.min(curIdx + 1, rows.length - 1) : Math.max(curIdx - 1, 0);
+        const next = rows[nextIdx];
+        setFocusedRowKey(rowKey(next));
+        if (next.type === "content") onSelectContent(next.content);
+        scrollRowIntoView(rowKey(next));
+        return;
+      }
+
+      // ←→: 折りたたみ/展開の専用操作。コンテンツの選択はまたがない
+      const row = curIdx >= 0 ? rows[curIdx] : rows[0];
+      if (curIdx < 0) { setFocusedRowKey(rowKey(row)); scrollRowIntoView(rowKey(row)); return; }
+
+      if (e.key === "ArrowRight") {
+        if (row.type === "chapter") {
+          if (!openChapters[row.ch]) setOpenChapters(prev => ({ ...prev, [row.ch]: true }));
+          else {
+            const child = rows[curIdx + 1];
+            if (child?.type === "hl" && child.ch === row.ch) { setFocusedRowKey(rowKey(child)); scrollRowIntoView(rowKey(child)); }
+          }
+        } else if (row.type === "hl") {
+          const hlKey = `${row.ch}-${row.hl}`;
+          if (!openHeadlines[hlKey]) setOpenHeadlines(prev => ({ ...prev, [hlKey]: true }));
+          else {
+            const child = rows[curIdx + 1];
+            if (child?.type === "content" && child.content.chapter === row.ch && child.content.headline === row.hl) {
+              setFocusedRowKey(rowKey(child));
+              onSelectContent(child.content);
+              scrollRowIntoView(rowKey(child));
+            }
+          }
+        }
+      } else if (e.key === "ArrowLeft") {
+        if (row.type === "hl") {
+          const hlKey = `${row.ch}-${row.hl}`;
+          if (openHeadlines[hlKey]) setOpenHeadlines(prev => ({ ...prev, [hlKey]: false }));
+          else {
+            const parent = rows.find(r => r.type === "chapter" && r.ch === row.ch);
+            if (parent) { setFocusedRowKey(rowKey(parent)); scrollRowIntoView(rowKey(parent)); }
+          }
+        } else if (row.type === "chapter") {
+          if (openChapters[row.ch]) setOpenChapters(prev => ({ ...prev, [row.ch]: false }));
+        } else if (row.type === "content") {
+          const parentKey = `hl:${row.content.chapter}-${row.content.headline}`;
+          if (rows.some(r => rowKey(r) === parentKey)) { setFocusedRowKey(parentKey); scrollRowIntoView(parentKey); }
+        }
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [enableKeyboardNav, bc, selectedContentId, onSelectContent, setOpenChapters, setOpenHeadlines]);
+  }, [enableKeyboardNav, rows, focusedRowKey, openChapters, openHeadlines, onSelectContent, setOpenChapters, setOpenHeadlines]);
 
   if (!bc.length) return <p className="text-sm text-center py-8" style={{ color: "var(--text-faint)" }}>コンテンツがありません</p>;
   return (
@@ -196,9 +263,11 @@ function BookContentTree({
         const hlNums = [...new Set(chContents.map(c => c.headline))].sort((a, b) => a - b);
         return (
           <div key={ch}>
-            <button onClick={() => setOpenChapters(prev => ({ ...prev, [ch]: !prev[ch] }))}
-              className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition hover:opacity-70"
-              style={{ background: "var(--surface)" }}>
+            <button data-row-key={`ch:${ch}`} onClick={() => setOpenChapters(prev => ({ ...prev, [ch]: !prev[ch] }))}
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border transition hover:opacity-70"
+              style={focusedRowKey === `ch:${ch}`
+                ? { background: "var(--surface)", borderColor: "var(--amber)" }
+                : { background: "var(--surface)", borderColor: "transparent" }}>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-mono font-bold" style={{ color: "var(--amber)" }}>Ch.{p(ch)}</span>
                 <span className="text-sm" style={{ color: "var(--text)" }}>{chTitle || `Chapter ${p(ch)}`}</span>
@@ -218,9 +287,12 @@ function BookContentTree({
                   return (
                     <div key={hl}>
                       <button
+                        data-row-key={`hl:${hlKey}`}
                         onClick={() => setOpenHeadlines(prev => ({ ...prev, [hlKey]: !prev[hlKey] }))}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition hover:opacity-70"
-                        style={{ background: "var(--surface)" }}>
+                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg border transition hover:opacity-70"
+                        style={focusedRowKey === `hl:${hlKey}`
+                          ? { background: "var(--surface)", borderColor: "var(--amber)" }
+                          : { background: "var(--surface)", borderColor: "transparent" }}>
                         <span className="text-xs font-mono" style={{ color: "var(--amber)" }}>HL.{p(hl)}</span>
                         {hlTitle && <span className="text-xs truncate" style={{ color: "var(--text-muted)" }}>{hlTitle}</span>}
                         <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
@@ -230,7 +302,7 @@ function BookContentTree({
                       {isHlOpen && (
                         <div className="mt-1 space-y-1.5">
                           {hlContents.map((c) => (
-                            <button key={c.id} data-content-id={c.id} onClick={() => onSelectContent(c)}
+                            <button key={c.id} data-row-key={`c:${c.id}`} onClick={() => onSelectContent(c)}
                               className="w-full text-left px-3 py-2.5 rounded-lg border transition hover:opacity-70"
                               style={c.id === selectedContentId
                                 ? { background: "var(--amber-bg)", borderColor: "var(--amber-border)" }
