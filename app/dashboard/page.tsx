@@ -81,7 +81,7 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      <main className="max-w-2xl mx-auto px-4 py-5 pb-24">
+      <main className={`mx-auto px-4 py-5 pb-24 ${tab === "books" ? "max-w-2xl md:max-w-5xl" : "max-w-2xl"}`}>
         {tab === "history" && (
           <div className="space-y-3">
             <p className="text-xs" style={{ color: "var(--text-faint)" }}>{filteredHistory.length}件</p>

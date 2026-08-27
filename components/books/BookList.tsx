@@ -1,8 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, Dispatch, SetStateAction } from "react";
 import { Book, Content } from "@/hooks/useBookBank";
 import DetailModal from "@/components/contents/DetailModal";
 import ContentModal from "@/components/contents/ContentModal";
+import ContentPanel, { PanelMode } from "@/components/contents/ContentPanel";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 interface Props {
   books: Book[];
@@ -137,7 +139,110 @@ function HeadlineList({ headlines, onChange }: { headlines: HeadlineEntry[]; onC
   );
 }
 
+function BookContentTree({
+  book, contents, openChapters, setOpenChapters, openHeadlines, setOpenHeadlines, onSelectContent, selectedContentId,
+}: {
+  book: Book;
+  contents: Content[];
+  openChapters: Record<number, boolean>;
+  setOpenChapters: Dispatch<SetStateAction<Record<number, boolean>>>;
+  openHeadlines: Record<string, boolean>;
+  setOpenHeadlines: Dispatch<SetStateAction<Record<string, boolean>>>;
+  onSelectContent: (c: Content) => void;
+  selectedContentId?: string;
+}) {
+  const bc = contents.filter(c => !c.archived && c.bookId === book.bookId)
+    .sort((a, b) => a.chapter - b.chapter || a.headline - b.headline || (a.order != null && b.order != null ? a.order - b.order : a.order != null ? -1 : b.order != null ? 1 : new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()));
+  const chs = [...new Set(bc.map(c => c.chapter))].sort((a, b) => a - b);
+  const chapterTitleMap: Record<string, string> = {};
+  parseChapterTitles(book.chapterTitles || "").forEach(e => { chapterTitleMap[e.num] = e.title; });
+  const headlineTitleMap: Record<string, string> = {};
+  parseHeadlineTitles(book.headlineTitles || "").forEach(e => { headlineTitleMap[`${e.ch}-${e.hl}`] = e.title; });
+  if (!bc.length) return <p className="text-sm text-center py-8" style={{ color: "var(--text-faint)" }}>コンテンツがありません</p>;
+  return (
+    <div className="space-y-1.5">
+      <p className="text-xs mb-3" style={{ color: "var(--text-faint)" }}>目次</p>
+      {chs.map(ch => {
+        const chContents = bc.filter(c => c.chapter === ch);
+        const isOpen = openChapters[ch];
+        const chTitle = chapterTitleMap[String(ch)] || "";
+        const hlNums = [...new Set(chContents.map(c => c.headline))].sort((a, b) => a - b);
+        return (
+          <div key={ch}>
+            <button onClick={() => setOpenChapters(prev => ({ ...prev, [ch]: !prev[ch] }))}
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition hover:opacity-70"
+              style={{ background: "var(--surface)" }}>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-bold" style={{ color: "var(--amber)" }}>Ch.{p(ch)}</span>
+                <span className="text-sm" style={{ color: "var(--text)" }}>{chTitle || `Chapter ${p(ch)}`}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs" style={{ color: "var(--text-faint)" }}>{chContents.length}件</span>
+                <span className="text-xs" style={{ color: "var(--text-faint)" }}>{isOpen ? "▲" : "▼"}</span>
+              </div>
+            </button>
+            {isOpen && (
+              <div className="mt-1 pl-2 space-y-1.5">
+                {hlNums.map(hl => {
+                  const hlKey = `${ch}-${hl}`;
+                  const hlContents = chContents.filter(c => c.headline === hl);
+                  const isHlOpen = openHeadlines[hlKey] ?? false;
+                  const hlTitle = headlineTitleMap[hlKey] || "";
+                  return (
+                    <div key={hl}>
+                      <button
+                        onClick={() => setOpenHeadlines(prev => ({ ...prev, [hlKey]: !prev[hlKey] }))}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition hover:opacity-70"
+                        style={{ background: "var(--surface)" }}>
+                        <span className="text-xs font-mono" style={{ color: "var(--amber)" }}>HL.{p(hl)}</span>
+                        {hlTitle && <span className="text-xs truncate" style={{ color: "var(--text-muted)" }}>{hlTitle}</span>}
+                        <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
+                        <span className="text-xs flex-shrink-0" style={{ color: "var(--text-faint)" }}>{hlContents.length}件</span>
+                        <span className="text-xs flex-shrink-0" style={{ color: "var(--text-faint)" }}>{isHlOpen ? "▲" : "▼"}</span>
+                      </button>
+                      {isHlOpen && (
+                        <div className="mt-1 space-y-1.5">
+                          {hlContents.map((c) => (
+                            <button key={c.id} onClick={() => onSelectContent(c)}
+                              className="w-full text-left px-3 py-2.5 rounded-lg border transition hover:opacity-70"
+                              style={c.id === selectedContentId
+                                ? { background: "var(--amber-bg)", borderColor: "var(--amber-border)" }
+                                : { background: "var(--surface)", borderColor: "var(--border)" }}>
+                              <div className="flex items-start gap-2">
+                                <span className="text-xs flex-shrink-0 mt-0.5 font-mono" style={{ color: "var(--text-faint)" }}>#{c.order}</span>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm leading-relaxed" style={{ color: "var(--text)" }}>{c.contents}</p>
+                                  {c.detail && <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>{c.detail}</p>}
+                                  {c.imageUrl && (
+                                    <img src={c.imageUrl} alt="" className="mt-2 max-h-32 rounded-lg object-cover border"
+                                      style={{ borderColor: "var(--border)" }}
+                                      onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                                  )}
+                                  {c.tags.length > 0 && (
+                                    <div className="flex gap-1 mt-1.5 flex-wrap">
+                                      {c.tags.map(t => <span key={t} className="px-1.5 py-0.5 rounded-full text-xs border" style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{t}</span>)}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function BookList({ books, genres, contents = [], allContents, onAdd, onUpdate, onDelete, onUpdateContent, onArchiveContent, onAddContent, selectedBook, onSelectBook }: Props) {
+  const isDesktop = useMediaQuery("(min-width: 768px)");
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ ...emptyForm });
   const [chapters, setChapters] = useState<ChapterEntry[]>([]);
@@ -159,6 +264,8 @@ export default function BookList({ books, genres, contents = [], allContents, on
   const [detailContent, setDetailContent] = useState<Content | null>(null);
   const [editingContent, setEditingContent] = useState<Content | null>(null);
   const [showAddContent, setShowAddContent] = useState(false);
+  const [panelContent, setPanelContent] = useState<Content | null>(null);
+  const [panelMode, setPanelMode] = useState<PanelMode>("view");
 
   const lookup = async (isbn: string, isEdit = false) => {
     setIsbnLoading(true);
@@ -176,13 +283,11 @@ export default function BookList({ books, genres, contents = [], allContents, on
     setSaving(true);
     setBookError(null);
     const headlineTitlesJson = stringifyHeadlineTitles(editHeadlines);
-    console.log("[handleUpdate] editHeadlines:", editHeadlines, "headlineTitles JSON:", headlineTitlesJson);
     try {
       await onUpdate(editing.id, { title: editForm.title, author: editForm.author, genre: editForm.genre, coverUrl: editForm.coverUrl, memo: editForm.memo, chapterTitles: stringifyChapterTitles(editChapters), headlineTitles: headlineTitlesJson });
       setEditing(null);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      console.error("[handleUpdate] error:", msg);
       setBookError(msg);
     } finally {
       setSaving(false);
@@ -210,7 +315,9 @@ export default function BookList({ books, genres, contents = [], allContents, on
         return dateB - dateA;
       });
 
-  return (
+  const selectBookAndReset = (b: Book) => { setSelected(b); setOpenChapters({}); setOpenHeadlines({}); };
+
+  const bookListScreen = (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <p className="text-xs" style={{ color: "var(--text-faint)" }}>{books.length}冊</p>
@@ -235,7 +342,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
       <div className="space-y-2">
         {!selectedGenre && <p className="text-xs" style={{ color: "var(--text-faint)" }}>新しい順</p>}
         {displayBooks.map(b => (
-          <div key={b.id} onClick={() => { setSelected(b); setOpenChapters({}); setOpenHeadlines({}); }}
+          <div key={b.id} onClick={() => selectBookAndReset(b)}
             className="flex gap-3 items-center px-4 py-3 rounded-xl border cursor-pointer transition hover:opacity-80"
             style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
             {b.coverUrl
@@ -254,9 +361,73 @@ export default function BookList({ books, genres, contents = [], allContents, on
         ))}
         {books.length === 0 && <p className="text-center py-12 text-sm" style={{ color: "var(--text-faint)" }}>書籍が登録されていません</p>}
       </div>
+    </div>
+  );
 
-      {/* Book Detail */}
-      {selected && (
+  return (
+    <div className="space-y-4">
+      {!isDesktop && bookListScreen}
+
+      {/* iPad 2-pane layout (md: 768px+) */}
+      {isDesktop && (
+        <div className="flex gap-4" style={{ height: "75vh" }}>
+          <div className="w-1/2 min-w-0 overflow-y-auto rounded-2xl border p-4" style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
+            {!selected ? bookListScreen : (
+              <div>
+                <button onClick={() => setSelected(null)} className="flex items-center gap-1 text-sm mb-3" style={{ color: "var(--text-muted)" }}>
+                  ← 書籍一覧
+                </button>
+                <div className="flex items-start gap-3 mb-4">
+                  {selected.coverUrl
+                    ? <img src={selected.coverUrl} alt="" className="w-14 h-20 object-cover rounded-xl flex-shrink-0" />
+                    : <div className="w-14 h-20 rounded-xl flex-shrink-0 flex items-center justify-center text-2xl" style={{ background: "var(--amber-bg)", color: "var(--amber)" }}>📖</div>
+                  }
+                  <div className="flex-1">
+                    <h2 className="font-semibold text-base leading-tight" style={{ color: "var(--text)" }}>{selected.title}</h2>
+                    {selected.author && <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>{selected.author}</p>}
+                    {selected.genre && <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{selected.genre}</span>}
+                  </div>
+                  <button onClick={() => setShowAddContent(true)} className="px-3 py-1.5 rounded-lg text-xs border flex-shrink-0"
+                    style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>+ 追加</button>
+                </div>
+                {selected.memo && (
+                  <div className="mb-4 p-3 rounded-xl border" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+                    <p className="text-xs mb-1" style={{ color: "var(--text-faint)" }}>📝 メモ</p>
+                    <p className="text-sm" style={{ color: "var(--text-muted)" }}>{selected.memo}</p>
+                  </div>
+                )}
+                <BookContentTree book={selected} contents={contents}
+                  openChapters={openChapters} setOpenChapters={setOpenChapters}
+                  openHeadlines={openHeadlines} setOpenHeadlines={setOpenHeadlines}
+                  onSelectContent={(c) => { setPanelContent(c); setPanelMode("view"); }}
+                  selectedContentId={panelContent?.id} />
+              </div>
+            )}
+          </div>
+          <div className="w-1/2 min-w-0 rounded-2xl border overflow-hidden" style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
+            <ContentPanel
+              content={panelContent}
+              mode={panelMode}
+              books={books}
+              genres={genres}
+              allContents={allContents || contents}
+              onModeChange={setPanelMode}
+              onUpdate={async (pageId, data) => {
+                await onUpdateContent?.(pageId, data);
+                setPanelContent(prev => prev && prev.id === pageId ? { ...prev, ...data } as Content : prev);
+              }}
+              onArchive={async (pageId, archived) => {
+                await onArchiveContent?.(pageId, archived);
+                setPanelContent(prev => prev && prev.id === pageId ? { ...prev, archived } : prev);
+              }}
+              onBookClick={(b) => { selectBookAndReset(b); setPanelContent(null); }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Book Detail (mobile only — replaced by 2-pane layout on iPad) */}
+      {!isDesktop && selected && (
         <div className={overlay} style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={() => setSelected(null)}>
           <div className="w-full sm:max-w-lg rounded-2xl max-h-[90vh] overflow-y-auto border m-4"
             style={{ background: "var(--bg2)", borderColor: "var(--border)" }} onClick={e => e.stopPropagation()}>
@@ -285,94 +456,10 @@ export default function BookList({ books, genres, contents = [], allContents, on
                 </div>
               )}
 
-              {(() => {
-                const bc = contents.filter(c => !c.archived && c.bookId === selected.bookId)
-                  .sort((a, b) => a.chapter - b.chapter || a.headline - b.headline || (a.order != null && b.order != null ? a.order - b.order : a.order != null ? -1 : b.order != null ? 1 : new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()));
-                const chs = [...new Set(bc.map(c => c.chapter))].sort((a, b) => a - b);
-                const chapterTitleMap: Record<string, string> = {};
-                parseChapterTitles(selected.chapterTitles || "").forEach(e => { chapterTitleMap[e.num] = e.title; });
-                const headlineTitleMap: Record<string, string> = {};
-                parseHeadlineTitles(selected.headlineTitles || "").forEach(e => { headlineTitleMap[`${e.ch}-${e.hl}`] = e.title; });
-                if (!bc.length) return <p className="text-sm text-center py-8" style={{ color: "var(--text-faint)" }}>コンテンツがありません</p>;
-                return (
-                  <div className="space-y-1.5">
-                    <p className="text-xs mb-3" style={{ color: "var(--text-faint)" }}>目次</p>
-                    {chs.map(ch => {
-                      const chContents = bc.filter(c => c.chapter === ch);
-                      const isOpen = openChapters[ch];
-                      const chTitle = chapterTitleMap[String(ch)] || "";
-                      const hlNums = [...new Set(chContents.map(c => c.headline))].sort((a, b) => a - b);
-                      return (
-                        <div key={ch}>
-                          <button onClick={() => setOpenChapters(prev => ({ ...prev, [ch]: !prev[ch] }))}
-                            className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition hover:opacity-70"
-                            style={{ background: "var(--surface)" }}>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-mono font-bold" style={{ color: "var(--amber)" }}>Ch.{p(ch)}</span>
-                              <span className="text-sm" style={{ color: "var(--text)" }}>{chTitle || `Chapter ${p(ch)}`}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs" style={{ color: "var(--text-faint)" }}>{chContents.length}件</span>
-                              <span className="text-xs" style={{ color: "var(--text-faint)" }}>{isOpen ? "▲" : "▼"}</span>
-                            </div>
-                          </button>
-                          {isOpen && (
-                            <div className="mt-1 pl-2 space-y-1.5">
-                              {hlNums.map(hl => {
-                                const hlKey = `${ch}-${hl}`;
-                                const hlContents = chContents.filter(c => c.headline === hl);
-                                const isHlOpen = openHeadlines[hlKey] ?? false;
-                                const hlTitle = headlineTitleMap[hlKey] || "";
-                                return (
-                                  <div key={hl}>
-                                    <button
-                                      onClick={() => setOpenHeadlines(prev => ({ ...prev, [hlKey]: !prev[hlKey] }))}
-                                      className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition hover:opacity-70"
-                                      style={{ background: "var(--surface)" }}>
-                                      <span className="text-xs font-mono" style={{ color: "var(--amber)" }}>HL.{p(hl)}</span>
-                                      {hlTitle && <span className="text-xs truncate" style={{ color: "var(--text-muted)" }}>{hlTitle}</span>}
-                                      <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
-                                      <span className="text-xs flex-shrink-0" style={{ color: "var(--text-faint)" }}>{hlContents.length}件</span>
-                                      <span className="text-xs flex-shrink-0" style={{ color: "var(--text-faint)" }}>{isHlOpen ? "▲" : "▼"}</span>
-                                    </button>
-                                    {isHlOpen && (
-                                      <div className="mt-1 space-y-1.5">
-                                        {hlContents.map((c) => (
-                                          <button key={c.id} onClick={() => setDetailContent(c)}
-                                            className="w-full text-left px-3 py-2.5 rounded-lg border transition hover:opacity-70"
-                                            style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
-                                            <div className="flex items-start gap-2">
-                                              <span className="text-xs flex-shrink-0 mt-0.5 font-mono" style={{ color: "var(--text-faint)" }}>#{c.order}</span>
-                                              <div className="flex-1 min-w-0">
-                                                <p className="text-sm leading-relaxed" style={{ color: "var(--text)" }}>{c.contents}</p>
-                                                {c.detail && <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>{c.detail}</p>}
-                                                {c.imageUrl && (
-                                                  <img src={c.imageUrl} alt="" className="mt-2 max-h-32 rounded-lg object-cover border"
-                                                    style={{ borderColor: "var(--border)" }}
-                                                    onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                                                )}
-                                                {c.tags.length > 0 && (
-                                                  <div className="flex gap-1 mt-1.5 flex-wrap">
-                                                    {c.tags.map(t => <span key={t} className="px-1.5 py-0.5 rounded-full text-xs border" style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{t}</span>)}
-                                                  </div>
-                                                )}
-                                              </div>
-                                            </div>
-                                          </button>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
+              <BookContentTree book={selected} contents={contents}
+                openChapters={openChapters} setOpenChapters={setOpenChapters}
+                openHeadlines={openHeadlines} setOpenHeadlines={setOpenHeadlines}
+                onSelectContent={(c) => setDetailContent(c)} />
             </div>
           </div>
         </div>
@@ -463,19 +550,19 @@ export default function BookList({ books, genres, contents = [], allContents, on
         />
       )}
 
-      {/* Content Detail */}
-      {detailContent && onUpdateContent && onArchiveContent && (
+      {/* Content Detail (mobile only) */}
+      {!isDesktop && detailContent && onUpdateContent && onArchiveContent && (
         <DetailModal
           content={detailContent} books={books} allContents={allContents || contents}
           onClose={() => setDetailContent(null)}
           onEdit={() => { setEditingContent(detailContent); setDetailContent(null); }}
           onArchive={() => { onArchiveContent(detailContent.id, !detailContent.archived); setDetailContent(null); }}
-          onBookClick={(b) => { setDetailContent(null); setSelected(b); setOpenChapters({}); setOpenHeadlines({}); }}
+          onBookClick={(b) => { setDetailContent(null); selectBookAndReset(b); }}
         />
       )}
 
-      {/* Edit Content */}
-      {editingContent && onUpdateContent && (
+      {/* Edit Content (mobile only) */}
+      {!isDesktop && editingContent && onUpdateContent && (
         <ContentModal
           books={books} genres={genres} allContents={allContents || contents} editing={editingContent}
           onClose={() => setEditingContent(null)}
