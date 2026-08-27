@@ -1,5 +1,5 @@
 "use client";
-import { useState, Dispatch, SetStateAction } from "react";
+import { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { Book, Content } from "@/hooks/useBookBank";
 import DetailModal from "@/components/contents/DetailModal";
 import ContentModal from "@/components/contents/ContentModal";
@@ -140,7 +140,7 @@ function HeadlineList({ headlines, onChange }: { headlines: HeadlineEntry[]; onC
 }
 
 function BookContentTree({
-  book, contents, openChapters, setOpenChapters, openHeadlines, setOpenHeadlines, onSelectContent, selectedContentId,
+  book, contents, openChapters, setOpenChapters, openHeadlines, setOpenHeadlines, onSelectContent, selectedContentId, enableKeyboardNav,
 }: {
   book: Book;
   contents: Content[];
@@ -150,6 +150,7 @@ function BookContentTree({
   setOpenHeadlines: Dispatch<SetStateAction<Record<string, boolean>>>;
   onSelectContent: (c: Content) => void;
   selectedContentId?: string;
+  enableKeyboardNav?: boolean;
 }) {
   const bc = contents.filter(c => !c.archived && c.bookId === book.bookId)
     .sort((a, b) => a.chapter - b.chapter || a.headline - b.headline || (a.order != null && b.order != null ? a.order - b.order : a.order != null ? -1 : b.order != null ? 1 : new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()));
@@ -158,6 +159,32 @@ function BookContentTree({
   parseChapterTitles(book.chapterTitles || "").forEach(e => { chapterTitleMap[e.num] = e.title; });
   const headlineTitleMap: Record<string, string> = {};
   parseHeadlineTitles(book.headlineTitles || "").forEach(e => { headlineTitleMap[`${e.ch}-${e.hl}`] = e.title; });
+
+  useEffect(() => {
+    if (!enableKeyboardNav) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight"].includes(e.key)) return;
+      const target = e.target as HTMLElement;
+      const tag = target.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable) return;
+      if (!bc.length) return;
+      const curIdx = selectedContentId ? bc.findIndex(c => c.id === selectedContentId) : -1;
+      const forward = e.key === "ArrowDown" || e.key === "ArrowRight";
+      const nextIdx = curIdx < 0 ? 0 : forward ? Math.min(curIdx + 1, bc.length - 1) : Math.max(curIdx - 1, 0);
+      if (nextIdx === curIdx) return;
+      e.preventDefault();
+      const next = bc[nextIdx];
+      setOpenChapters(prev => ({ ...prev, [next.chapter]: true }));
+      setOpenHeadlines(prev => ({ ...prev, [`${next.chapter}-${next.headline}`]: true }));
+      onSelectContent(next);
+      requestAnimationFrame(() => {
+        document.querySelector(`[data-content-id="${next.id}"]`)?.scrollIntoView({ block: "nearest" });
+      });
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [enableKeyboardNav, bc, selectedContentId, onSelectContent, setOpenChapters, setOpenHeadlines]);
+
   if (!bc.length) return <p className="text-sm text-center py-8" style={{ color: "var(--text-faint)" }}>コンテンツがありません</p>;
   return (
     <div className="space-y-1.5">
@@ -203,7 +230,7 @@ function BookContentTree({
                       {isHlOpen && (
                         <div className="mt-1 space-y-1.5">
                           {hlContents.map((c) => (
-                            <button key={c.id} onClick={() => onSelectContent(c)}
+                            <button key={c.id} data-content-id={c.id} onClick={() => onSelectContent(c)}
                               className="w-full text-left px-3 py-2.5 rounded-lg border transition hover:opacity-70"
                               style={c.id === selectedContentId
                                 ? { background: "var(--amber-bg)", borderColor: "var(--amber-border)" }
@@ -400,7 +427,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
                   openChapters={openChapters} setOpenChapters={setOpenChapters}
                   openHeadlines={openHeadlines} setOpenHeadlines={setOpenHeadlines}
                   onSelectContent={(c) => { setPanelContent(c); setPanelMode("view"); }}
-                  selectedContentId={panelContent?.id} />
+                  selectedContentId={panelContent?.id} enableKeyboardNav />
               </div>
             )}
           </div>
