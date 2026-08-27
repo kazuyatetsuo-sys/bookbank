@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect, Dispatch, SetStateAction } from "react";
+import { useState, useEffect, useRef, Dispatch, SetStateAction } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Book, Content } from "@/hooks/useBookBank";
 import ContentModal from "@/components/contents/ContentModal";
 import ContentPanel, { PanelMode } from "@/components/contents/ContentPanel";
@@ -362,6 +363,10 @@ export default function BookList({ books, genres, contents = [], allContents, on
   const [showAddContent, setShowAddContent] = useState(false);
   const [panelContent, setPanelContent] = useState<Content | null>(null);
   const [panelMode, setPanelMode] = useState<PanelMode>("view");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const urlInitialized = useRef(false);
 
   const lookup = async (isbn: string, isEdit = false) => {
     setIsbnLoading(true);
@@ -412,6 +417,38 @@ export default function BookList({ books, genres, contents = [], allContents, on
       });
 
   const selectBookAndReset = (b: Book) => { setSelected(b); setOpenChapters({}); setOpenHeadlines({}); };
+
+  // URLの book/content パラメータから初期表示を復元(直接アクセス・共有用)
+  useEffect(() => {
+    if (urlInitialized.current) return;
+    const bookIdParam = searchParams.get("book");
+    const contentIdParam = searchParams.get("content");
+    if (!bookIdParam && !contentIdParam) { urlInitialized.current = true; return; }
+    if (!books.length || !contents.length) return;
+    urlInitialized.current = true;
+    const c = contentIdParam ? contents.find(x => x.id === contentIdParam) : undefined;
+    if (c) {
+      const b = books.find(x => x.bookId === c.bookId);
+      if (b) selectBookAndReset(b);
+      setOpenChapters(prev => ({ ...prev, [c.chapter]: true }));
+      setOpenHeadlines(prev => ({ ...prev, [`${c.chapter}-${c.headline}`]: true }));
+      setPanelContent(c);
+      setPanelMode("view");
+      return;
+    }
+    const b = bookIdParam ? books.find(x => x.bookId === bookIdParam) : undefined;
+    if (b) selectBookAndReset(b);
+  }, [books, contents, searchParams]);
+
+  // 選択中の書籍・コンテンツをURLに反映(直接アクセス・共有用)
+  useEffect(() => {
+    if (!urlInitialized.current) return;
+    const params = new URLSearchParams();
+    if (selected) params.set("book", selected.bookId);
+    if (panelContent) params.set("content", panelContent.id);
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [selected?.bookId, panelContent?.id, router, pathname]);
 
   const bookListScreen = (
     <div className="space-y-4">

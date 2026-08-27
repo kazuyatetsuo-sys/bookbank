@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { useBookBank, Content, Book } from "@/hooks/useBookBank";
 import ContentModal from "@/components/contents/ContentModal";
 import DetailModal from "@/components/contents/DetailModal";
@@ -9,9 +10,18 @@ import SettingsPage from "@/components/contents/SettingsPage";
 
 type Tab = "history" | "books" | "random" | "sortlist" | "sort";
 
-export default function Dashboard() {
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={null}>
+      <Dashboard />
+    </Suspense>
+  );
+}
+
+function Dashboard() {
   const bank = useBookBank();
-  const [tab, setTab] = useState<Tab>("random");
+  const searchParams = useSearchParams();
+  const [tab, setTab] = useState<Tab>(() => (searchParams.get("book") || searchParams.get("content")) ? "books" : "random");
   const [showAdd, setShowAdd] = useState(false);
   const [historyDetail, setHistoryDetail] = useState<Content | null>(null);
   const [editingContent, setEditingContent] = useState<Content | null>(null);
