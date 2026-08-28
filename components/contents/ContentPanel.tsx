@@ -341,6 +341,18 @@ export default function ContentPanel({ content, mode, books, genres, allContents
     ? cur.relIds.split(",").filter(Boolean).map(id => allContents.find(c => c.id === id)).filter(Boolean) as Content[]
     : [];
 
+  // 同じ書籍内での前後のコンテンツ(Chapter/Headline/Order順)
+  const siblingContents = allContents
+    .filter(c => !c.archived && c.bookId === cur.bookId)
+    .sort((a, b) => a.chapter - b.chapter || a.headline - b.headline || (a.order != null && b.order != null ? a.order - b.order : a.order != null ? -1 : b.order != null ? 1 : new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()));
+  const siblingIndex = siblingContents.findIndex(c => c.id === cur.id);
+  const prevContent = siblingIndex > 0 ? siblingContents[siblingIndex - 1] : null;
+  const nextContent = siblingIndex >= 0 && siblingIndex < siblingContents.length - 1 ? siblingContents[siblingIndex + 1] : null;
+  const navigateSibling = (target: Content | null) => {
+    if (!target) return;
+    setStack(s => [...s.slice(0, -1), target]);
+  };
+
   return (
     <div className={fullHeight ? "h-full overflow-y-auto overscroll-contain" : ""}>
       {stack.length > 1 && (
@@ -351,7 +363,14 @@ export default function ContentPanel({ content, mode, books, genres, allContents
       )}
 
       <div className="p-5 space-y-4">
-        <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <button onClick={() => navigateSibling(prevContent)} disabled={!prevContent} aria-label="前のコンテンツ" title="前のコンテンツ"
+              className="w-6 h-6 flex items-center justify-center rounded disabled:opacity-30" style={{ color: "var(--text-muted)" }}>‹</button>
+            <button onClick={() => navigateSibling(nextContent)} disabled={!nextContent} aria-label="次のコンテンツ" title="次のコンテンツ"
+              className="w-6 h-6 flex items-center justify-center rounded disabled:opacity-30" style={{ color: "var(--text-muted)" }}>›</button>
+          </div>
+
           <button
             onClick={() => book && onBookClick?.(book)}
             disabled={!book || !onBookClick}
@@ -362,19 +381,15 @@ export default function ContentPanel({ content, mode, books, genres, allContents
           </button>
 
           {(cur.author || cur.genre || cur.tags.length > 0) && (
-            <div className="flex items-center gap-1.5 flex-shrink-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
               {cur.author && <span className="px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}>✍ {cur.author}</span>}
               {cur.genre && <span className="px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}>{cur.genre}</span>}
               {cur.tags.map(t => <span key={t} className="px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{t}</span>)}
             </div>
           )}
 
-          <span className="text-xs flex-shrink-0 ml-auto" style={{ color: "var(--text-faint)" }}>
-            {cur.createdAt ? new Date(cur.createdAt).toLocaleDateString("ja-JP") : "—"}
-          </span>
-
           <button onClick={copyShareUrl} aria-label="共有URLを取得" title="共有URLを取得"
-            className="text-xs flex-shrink-0" style={{ color: copied ? "var(--amber)" : "var(--text-faint)" }}>
+            className="text-xs flex-shrink-0 ml-auto" style={{ color: copied ? "var(--amber)" : "var(--text-faint)" }}>
             {copied ? "✓ コピー済" : "🔗"}
           </button>
 
