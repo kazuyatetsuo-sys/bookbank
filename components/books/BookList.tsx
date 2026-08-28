@@ -415,20 +415,28 @@ export default function BookList({ books, genres, contents = [], allContents, on
 
   const selectBookAndReset = (b: Book) => { setSelected(b); setOpenChapters({}); setOpenHeadlines({}); };
 
-  // 書籍一覧での↑↓キー選択
+  // 書籍一覧での↑↓キー選択・Enterキーで決定
   useEffect(() => {
     if (selected) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+      if (e.key !== "ArrowDown" && e.key !== "ArrowUp" && e.key !== "Enter") return;
       const target = e.target as HTMLElement;
       const tag = target.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable) return;
       if (!displayBooks.length) return;
+
+      if (e.key === "Enter") {
+        const b = focusedBookIndex >= 0 ? displayBooks[focusedBookIndex] : undefined;
+        if (!b) return;
+        e.preventDefault();
+        selectBookAndReset(b);
+        return;
+      }
+
       e.preventDefault();
       setFocusedBookIndex(prev => {
         const next = e.key === "ArrowDown" ? Math.min(prev + 1, displayBooks.length - 1) : Math.max(prev - 1, 0);
         const b = displayBooks[next];
-        selectBookAndReset(b);
         requestAnimationFrame(() => {
           document.querySelector(`[data-row-key="book:${CSS.escape(b.id)}"]`)?.scrollIntoView({ block: "nearest" });
         });
@@ -437,7 +445,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [selected, displayBooks]);
+  }, [selected, displayBooks, focusedBookIndex]);
 
   // URLの book/content パラメータから初期表示を復元(直接アクセス・共有用)
   useEffect(() => {
