@@ -364,6 +364,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
   const [editHeadlines, setEditHeadlines] = useState<HeadlineEntry[]>([]);
   const [saving, setSaving] = useState(false);
   const [bookError, setBookError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [internalSelected, setInternalSelected] = useState<Book | null>(null);
   const rawSelected = selectedBook !== undefined ? selectedBook : internalSelected;
   const selected = rawSelected ? (books.find(b => b.id === rawSelected.id) ?? rawSelected) : null;
@@ -412,6 +413,24 @@ export default function BookList({ books, genres, contents = [], allContents, on
     setEditForm({ title: b.title, author: b.author, genre: b.genre, coverUrl: b.coverUrl, isbn: "", memo: b.memo || "" });
     setEditChapters(parseChapterTitles(b.chapterTitles || ""));
     setEditHeadlines(parseHeadlineTitles(b.headlineTitles || ""));
+    setConfirmDelete(false);
+  };
+
+  const handleDeleteBook = async () => {
+    if (!editing) return;
+    setSaving(true);
+    setBookError(null);
+    try {
+      await onDelete(editing.id);
+      if (selected?.id === editing.id) { setSelected(null); setPanelContent(null); }
+      setEditing(null);
+      setConfirmDelete(false);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setBookError(msg);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const allGenres = [...new Set(books.map(b => b.genre || "未分類"))].sort();
@@ -550,7 +569,6 @@ export default function BookList({ books, genres, contents = [], allContents, on
             </div>
             <div className="flex gap-3">
               <button onClick={e => { e.stopPropagation(); pickRandomFromBook(b); }} className="text-xs" aria-label="ランダム表示" title="ランダム表示" style={{ color: "var(--text-muted)" }}>🎲</button>
-              <button onClick={e => { e.stopPropagation(); onDelete(b.id); }} className="text-xs hover:text-red-400" style={{ color: "var(--text-faint)" }}>削除</button>
             </div>
           </div>
         ))}
@@ -704,6 +722,25 @@ export default function BookList({ books, genres, contents = [], allContents, on
             <div className="flex gap-2 pt-1">
               <button onClick={() => setEditing(null)} className="flex-1 py-2.5 rounded-xl text-sm border" style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>キャンセル</button>
               <button onClick={handleUpdate} disabled={saving} className="flex-1 py-2.5 rounded-xl font-semibold text-sm disabled:opacity-50" style={{ background: "var(--amber)", color: "#fff" }}>{saving ? "保存中…" : "更新"}</button>
+            </div>
+
+            {/* 書籍削除(誤操作防止のため下部に小さく分離・押下後に再確認) */}
+            <div className="pt-3 mt-2 border-t text-center" style={{ borderColor: "var(--border)" }}>
+              {!confirmDelete ? (
+                <button onClick={() => setConfirmDelete(true)} className="text-xs" style={{ color: "var(--text-faint)" }}>
+                  この書籍を削除
+                </button>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-xs" style={{ color: "#f87171" }}>「{editing.title}」を削除します。この操作は取り消せません。よろしいですか？</p>
+                  <div className="flex gap-2">
+                    <button onClick={() => setConfirmDelete(false)} className="flex-1 py-2 rounded-xl text-xs border" style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>キャンセル</button>
+                    <button onClick={handleDeleteBook} disabled={saving} className="flex-1 py-2 rounded-xl text-xs font-semibold disabled:opacity-50" style={{ background: "#ef4444", color: "#fff" }}>
+                      {saving ? "削除中…" : "削除する"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
