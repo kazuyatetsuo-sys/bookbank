@@ -597,6 +597,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
         await onUpdateContent?.(pageId, data);
         setPanelContent(prev => prev && prev.id === pageId ? { ...prev, ...data } as Content : prev);
       }}
+      onAdd={onAddContent}
       onArchive={async (pageId, archived) => {
         await onArchiveContent?.(pageId, archived);
         setPanelContent(prev => prev && prev.id === pageId ? { ...prev, archived } : prev);

@@ -12,6 +12,7 @@ interface Props {
   allContents: Content[];
   onModeChange: (mode: PanelMode) => void;
   onUpdate: (pageId: string, data: Partial<Content>) => Promise<void>;
+  onAdd?: (data: Omit<Content, "id" | "title" | "archived" | "createdAt" | "updatedAt">) => Promise<boolean | void>;
   onArchive: (pageId: string, archived: boolean) => Promise<void>;
   onBookClick?: (book: Book) => void;
   /** true (default): fills the parent's height and scrolls internally (desktop split view). false: flows with the page's own scroll (mobile full-screen). */
@@ -27,7 +28,7 @@ const inp = "w-full rounded-xl p-3 text-sm border focus:outline-none";
 const inpStyle = { background: "var(--surface)", borderColor: "var(--border)", color: "var(--text)" };
 const p = (n: number) => String(n).padStart(2, "0");
 
-export default function ContentPanel({ content, mode, books, genres, allContents, onModeChange, onUpdate, onArchive, onBookClick, fullHeight = true }: Props) {
+export default function ContentPanel({ content, mode, books, genres, allContents, onModeChange, onUpdate, onAdd, onArchive, onBookClick, fullHeight = true }: Props) {
   const [stack, setStack] = useState<Content[]>(content ? [content] : []);
   const [form, setForm] = useState({ ...emptyForm });
   const [tagInput, setTagInput] = useState("");
@@ -36,7 +37,8 @@ export default function ContentPanel({ content, mode, books, genres, allContents
   const [imageConverting, setImageConverting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const handleSaveRef = useRef<() => Promise<void>>(async () => {});
+  const [forcedNew, setForcedNew] = useState(false);
+  const handleSaveRef = useRef<(andContinue?: boolean) => Promise<void>>(async () => {});
   const modeRef = useRef(mode);
   modeRef.current = mode;
 
@@ -56,16 +58,37 @@ export default function ContentPanel({ content, mode, books, genres, allContents
       });
       setImageInput(cur.imageUrl ?? "");
     }
+    setForcedNew(false);
     setSaveError(null);
   }, [cur?.id]);
 
-  const handleSave = async () => {
+  const isEditingExisting = !!cur && !forcedNew;
+
+  const handleSave = async (andContinue = false) => {
     if (!cur) return;
     setSaving(true);
     setSaveError(null);
     try {
-      await onUpdate(cur.id, form);
-      onModeChange("view");
+      if (isEditingExisting) await onUpdate(cur.id, form);
+      else await onAdd?.(form);
+      if (andContinue) {
+        setForcedNew(true);
+        setTagInput("");
+        setImageInput("");
+        setForm(f => ({
+          ...emptyForm,
+          bookId: f.bookId,
+          bookTitle: f.bookTitle,
+          genre: f.genre,
+          author: f.author,
+          chapter: f.chapter,
+          headline: f.headline,
+          order: f.order + 1,
+        }));
+      } else {
+        setForcedNew(false);
+        onModeChange("view");
+      }
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -80,7 +103,7 @@ export default function ContentPanel({ content, mode, books, genres, allContents
       if (!cur) return;
       e.preventDefault();
       if (modeRef.current === "view") onModeChange("edit");
-      else handleSaveRef.current();
+      else handleSaveRef.current(true);
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -140,8 +163,8 @@ export default function ContentPanel({ content, mode, books, genres, allContents
     return (
       <div className={`${fullHeight ? "h-full overflow-y-auto overscroll-contain" : ""} p-6 space-y-5`}>
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold" style={{ color: "var(--text)" }}>編集</h2>
-          <button onClick={() => onModeChange("view")} className="text-2xl leading-none" style={{ color: "var(--text-muted)" }}>×</button>
+          <h2 className="text-lg font-semibold" style={{ color: "var(--text)" }}>{isEditingExisting ? "編集" : "新規コンテンツ"}</h2>
+          <button onClick={() => { setForcedNew(false); onModeChange("view"); }} className="text-2xl leading-none" style={{ color: "var(--text-muted)" }}>×</button>
         </div>
 
         <div>
@@ -275,9 +298,14 @@ export default function ContentPanel({ content, mode, books, genres, allContents
         )}
 
         <div className="flex gap-3 pt-2">
-          <button onClick={() => onModeChange("view")} className="flex-1 py-3 rounded-xl text-sm border"
+          <button onClick={() => { setForcedNew(false); onModeChange("view"); }} className="flex-1 py-3 rounded-xl text-sm border"
             style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>キャンセル</button>
-          <button onClick={handleSave} disabled={saving}
+          <button onClick={() => handleSave(true)} disabled={saving}
+            className="flex-1 py-3 rounded-xl font-semibold text-sm border disabled:opacity-50"
+            style={{ borderColor: "var(--amber-border)", color: "var(--amber)", background: "var(--amber-bg)" }}>
+            {saving ? "保存中…" : "続けて追加"}
+          </button>
+          <button onClick={() => handleSave(false)} disabled={saving}
             className="flex-1 py-3 rounded-xl font-semibold text-sm disabled:opacity-50"
             style={{ background: "var(--amber)", color: "#fff" }}>
             {saving ? "保存中…" : "保存"}

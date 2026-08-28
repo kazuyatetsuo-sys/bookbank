@@ -113,6 +113,7 @@ function Dashboard() {
         await bank.updateContent(pageId, data);
         setHistoryDetail(prev => prev && prev.id === pageId ? { ...prev, ...data } as Content : prev);
       }}
+      onAdd={bank.addContent}
       onArchive={async (pageId, archived) => {
         await bank.archiveContent(pageId, archived);
         setHistoryDetail(prev => prev && prev.id === pageId ? { ...prev, archived } : prev);
@@ -151,6 +152,7 @@ function Dashboard() {
         await bank.updateContent(pageId, data);
         setRandomDetail(prev => prev && prev.id === pageId ? { ...prev, ...data } as Content : prev);
       }}
+      onAdd={bank.addContent}
       onArchive={async (pageId, archived) => {
         await bank.archiveContent(pageId, archived);
         setRandomDetail(prev => prev && prev.id === pageId ? { ...prev, archived } : prev);
