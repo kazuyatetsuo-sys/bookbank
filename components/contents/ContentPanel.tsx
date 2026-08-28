@@ -38,6 +38,7 @@ export default function ContentPanel({ content, mode, books, genres, allContents
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [forcedNew, setForcedNew] = useState(false);
+  const [copied, setCopied] = useState(false);
   const handleSaveRef = useRef<(andContinue?: boolean) => Promise<void>>(async () => {});
   const modeRef = useRef(mode);
   modeRef.current = mode;
@@ -60,9 +61,20 @@ export default function ContentPanel({ content, mode, books, genres, allContents
     }
     setForcedNew(false);
     setSaveError(null);
+    setCopied(false);
   }, [cur?.id]);
 
   const isEditingExisting = !!cur && !forcedNew;
+
+  const copyShareUrl = async () => {
+    if (!cur) return;
+    const url = `${window.location.origin}${window.location.pathname}?book=${encodeURIComponent(cur.bookId)}&content=${encodeURIComponent(cur.id)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  };
 
   const handleSave = async (andContinue = false) => {
     if (!cur) return;
@@ -164,7 +176,15 @@ export default function ContentPanel({ content, mode, books, genres, allContents
       <div className={`${fullHeight ? "h-full overflow-y-auto overscroll-contain" : ""} p-6 space-y-5`}>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold" style={{ color: "var(--text)" }}>{isEditingExisting ? "編集" : "新規コンテンツ"}</h2>
-          <button onClick={() => { setForcedNew(false); onModeChange("view"); }} className="text-2xl leading-none" style={{ color: "var(--text-muted)" }}>×</button>
+          <div className="flex items-center gap-3">
+            {isEditingExisting && (
+              <button onClick={copyShareUrl} aria-label="共有URLを取得" title="共有URLを取得"
+                className="text-sm flex-shrink-0" style={{ color: copied ? "var(--amber)" : "var(--text-muted)" }}>
+                {copied ? "✓ コピー済" : "🔗 共有URL"}
+              </button>
+            )}
+            <button onClick={() => { setForcedNew(false); onModeChange("view"); }} className="text-2xl leading-none" style={{ color: "var(--text-muted)" }}>×</button>
+          </div>
         </div>
 
         <div>
@@ -352,6 +372,11 @@ export default function ContentPanel({ content, mode, books, genres, allContents
           <span className="text-xs flex-shrink-0 ml-auto" style={{ color: "var(--text-faint)" }}>
             {cur.createdAt ? new Date(cur.createdAt).toLocaleDateString("ja-JP") : "—"}
           </span>
+
+          <button onClick={copyShareUrl} aria-label="共有URLを取得" title="共有URLを取得"
+            className="text-xs flex-shrink-0" style={{ color: copied ? "var(--amber)" : "var(--text-faint)" }}>
+            {copied ? "✓ コピー済" : "🔗"}
+          </button>
 
           {stack.length === 1 && (
             <>
