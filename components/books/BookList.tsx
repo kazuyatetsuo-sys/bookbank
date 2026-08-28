@@ -431,6 +431,14 @@ export default function BookList({ books, genres, contents = [], allContents, on
 
   const selectBookAndReset = (b: Book) => { setSelected(b); setOpenChapters({}); setOpenHeadlines({}); };
 
+  const pickRandomFromBook = (b: Book) => {
+    const bookContents = contents.filter(c => !c.archived && c.bookId === b.bookId);
+    if (!bookContents.length) return;
+    const pick = bookContents[Math.floor(Math.random() * bookContents.length)];
+    setPanelContent(pick);
+    setPanelMode("view");
+  };
+
   // 本を閉じたら(書籍一覧に戻ったら)Chapter/HLの開閉状態を全てリセット
   useEffect(() => {
     if (!selected) { setOpenChapters({}); setOpenHeadlines({}); }
@@ -541,7 +549,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
               {b.author && <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{b.author}</p>}
             </div>
             <div className="flex gap-3">
-              <button onClick={e => { e.stopPropagation(); startEdit(b); }} className="text-xs" style={{ color: "var(--text-muted)" }}>編集</button>
+              <button onClick={e => { e.stopPropagation(); pickRandomFromBook(b); }} className="text-xs" aria-label="ランダム表示" title="ランダム表示" style={{ color: "var(--text-muted)" }}>🎲</button>
               <button onClick={e => { e.stopPropagation(); onDelete(b.id); }} className="text-xs hover:text-red-400" style={{ color: "var(--text-faint)" }}>削除</button>
             </div>
           </div>
@@ -566,8 +574,14 @@ export default function BookList({ books, genres, contents = [], allContents, on
           {book.author && <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>{book.author}</p>}
           {book.genre && <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{book.genre}</span>}
         </div>
-        <button onClick={() => setShowAddContent(true)} className="px-3 py-1.5 rounded-lg text-xs border flex-shrink-0"
-          style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>+ 追加</button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button onClick={() => pickRandomFromBook(book)} className="px-2.5 py-1.5 rounded-lg text-xs border"
+            style={{ borderColor: "var(--border)", color: "var(--text-muted)" }} aria-label="ランダム表示" title="ランダム表示">🎲</button>
+          <button onClick={() => startEdit(book)} className="px-2.5 py-1.5 rounded-lg text-xs border"
+            style={{ borderColor: "var(--border)", color: "var(--text-muted)" }} aria-label="編集" title="編集">✎</button>
+          <button onClick={() => setShowAddContent(true)} className="px-3 py-1.5 rounded-lg text-xs border"
+            style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>+ 追加</button>
+        </div>
       </div>
       {book.memo && (
         <div className="mb-4 p-3 rounded-xl border" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
