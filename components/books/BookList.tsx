@@ -267,17 +267,14 @@ function BookContentTree({
         const hlNums = [...new Set(chContents.map(c => c.headline))].sort((a, b) => a - b);
         return (
           <div key={ch}>
-            <button data-row-key={`ch:${ch}`} onClick={() => setOpenChapters(prev => ({ ...prev, [ch]: !prev[ch] }))}
-              className="w-full flex items-center justify-between text-left pl-3 pr-1 py-3 transition hover:opacity-70"
+            <button data-row-key={`ch:${ch}`}
+              onClick={() => { setFocusedRowKey(`ch:${ch}`); setOpenChapters(prev => ({ ...prev, [ch]: !prev[ch] })); }}
+              className="w-full flex items-center gap-2 text-left pl-3 pr-1 py-3 transition hover:opacity-70"
               style={rowAccent(focusedRowKey === `ch:${ch}`)}>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-bold" style={{ color: "var(--amber)" }}>Ch.{p(ch)}</span>
-                <span className="text-sm" style={{ color: "var(--text)" }}>{chTitle || `Chapter ${p(ch)}`}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs" style={{ color: "var(--text-faint)" }}>{chContents.length}件</span>
-                <span className="text-xs" style={{ color: "var(--text-faint)" }}>{isOpen ? "▲" : "▼"}</span>
-              </div>
+              <span className="text-xs flex-shrink-0 w-3" style={{ color: "var(--text-faint)" }}>{isOpen ? "▼" : "▶"}</span>
+              <span className="text-xs font-mono font-bold flex-shrink-0" style={{ color: "var(--amber)" }}>Ch.{p(ch)}</span>
+              <span className="text-sm truncate" style={{ color: "var(--text)" }}>{chTitle || `Chapter ${p(ch)}`}</span>
+              <span className="text-xs flex-shrink-0 ml-auto" style={{ color: "var(--text-faint)" }}>{chContents.length}件</span>
             </button>
             {isOpen && (
               <div className="pl-4">
@@ -290,21 +287,22 @@ function BookContentTree({
                     <div key={hl}>
                       <button
                         data-row-key={`hl:${hlKey}`}
-                        onClick={() => setOpenHeadlines(prev => ({ ...prev, [hlKey]: !prev[hlKey] }))}
+                        onClick={() => { setFocusedRowKey(`hl:${hlKey}`); setOpenHeadlines(prev => ({ ...prev, [hlKey]: !prev[hlKey] })); }}
                         className="w-full flex items-center gap-2 text-left pl-3 pr-1 py-2.5 transition hover:opacity-70"
                         style={rowAccent(focusedRowKey === `hl:${hlKey}`)}>
-                        <span className="text-xs font-mono" style={{ color: "var(--amber)" }}>HL.{p(hl)}</span>
+                        <span className="text-xs flex-shrink-0 w-3" style={{ color: "var(--text-faint)" }}>{isHlOpen ? "▼" : "▶"}</span>
+                        <span className="text-xs font-mono flex-shrink-0" style={{ color: "var(--amber)" }}>HL.{p(hl)}</span>
                         {hlTitle && <span className="text-xs truncate" style={{ color: "var(--text-muted)" }}>{hlTitle}</span>}
                         <div className="flex-1" />
                         <span className="text-xs flex-shrink-0" style={{ color: "var(--text-faint)" }}>{hlContents.length}件</span>
-                        <span className="text-xs flex-shrink-0" style={{ color: "var(--text-faint)" }}>{isHlOpen ? "▲" : "▼"}</span>
                       </button>
                       {isHlOpen && (
                         <div className="pl-4">
                           {hlContents.map((c) => (
-                            <button key={c.id} data-row-key={`c:${c.id}`} onClick={() => onSelectContent(c)}
+                            <button key={c.id} data-row-key={`c:${c.id}`}
+                              onClick={() => { setFocusedRowKey(`c:${c.id}`); onSelectContent(c); }}
                               className="w-full text-left pl-3 pr-1 py-3 transition hover:opacity-70"
-                              style={rowAccent(c.id === selectedContentId)}>
+                              style={rowAccent(focusedRowKey === `c:${c.id}`)}>
                               <div className="flex items-start gap-2">
                                 <span className="text-xs flex-shrink-0 mt-0.5 font-mono" style={{ color: "var(--text-faint)" }}>#{c.order}</span>
                                 <div className="flex-1 min-w-0">
