@@ -305,19 +305,40 @@ export default function ContentPanel({ content, mode, books, genres, allContents
       <div className="p-5 space-y-4">
         <p className="text-base font-medium leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{cur.contents}</p>
 
-        <button
-          onClick={() => book && onBookClick?.(book)}
-          disabled={!book || !onBookClick}
-          className="flex items-center gap-2 text-left"
-        >
-          {book?.coverUrl && <img src={book.coverUrl} alt="" className="w-5 h-7 object-cover rounded" />}
-          <p className="text-xs" style={{ color: "var(--amber)" }}>{cur.bookTitle} · Ch.{p(cur.chapter)} · HL.{p(cur.headline)} · #{cur.order}</p>
-        </button>
+        <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
+          <button
+            onClick={() => book && onBookClick?.(book)}
+            disabled={!book || !onBookClick}
+            className="flex items-center gap-1.5 flex-shrink-0 min-w-0 max-w-[45%]"
+          >
+            {book?.coverUrl && <img src={book.coverUrl} alt="" className="w-5 h-7 object-cover rounded flex-shrink-0" />}
+            <span className="text-xs truncate" style={{ color: "var(--amber)" }}>{cur.bookTitle} · Ch.{p(cur.chapter)} · HL.{p(cur.headline)} · #{cur.order}</span>
+          </button>
 
-        <div className="flex flex-wrap gap-1.5">
-          {cur.author && <span className="px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}>✍ {cur.author}</span>}
-          {cur.genre && <span className="px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}>{cur.genre}</span>}
-          {cur.tags.map(t => <span key={t} className="px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{t}</span>)}
+          {(cur.author || cur.genre || cur.tags.length > 0) && (
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              {cur.author && <span className="px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}>✍ {cur.author}</span>}
+              {cur.genre && <span className="px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-muted)" }}>{cur.genre}</span>}
+              {cur.tags.map(t => <span key={t} className="px-2 py-0.5 rounded-full text-xs border" style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{t}</span>)}
+            </div>
+          )}
+
+          <span className="text-xs flex-shrink-0 ml-auto" style={{ color: "var(--text-faint)" }}>
+            {cur.createdAt ? new Date(cur.createdAt).toLocaleDateString("ja-JP") : "—"}
+          </span>
+
+          {stack.length === 1 && (
+            <>
+              <button onClick={() => onArchive(cur.id, !cur.archived)} className="text-xs flex-shrink-0"
+                style={{ color: "var(--text-faint)" }}>
+                {cur.archived ? "restore" : "archive"}
+              </button>
+              <button onClick={() => onModeChange("edit")} aria-label="編集" title="編集"
+                className="flex-shrink-0 leading-none" style={{ color: "var(--amber)", fontSize: "1rem" }}>
+                ✎
+              </button>
+            </>
+          )}
         </div>
 
         {cur.imageUrl && (
@@ -356,23 +377,7 @@ export default function ContentPanel({ content, mode, books, genres, allContents
           </div>
         )}
 
-        <p className="text-xs" style={{ color: "var(--text-faint)" }}>
-          作成: {cur.createdAt ? new Date(cur.createdAt).toLocaleDateString("ja-JP") : "—"}
-        </p>
       </div>
-
-      {stack.length === 1 && (
-        <div className="flex gap-3 px-5 pb-5">
-          <button onClick={() => onArchive(cur.id, !cur.archived)} className="px-4 py-2.5 rounded-xl text-sm border"
-            style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>
-            {cur.archived ? "復元" : "アーカイブ"}
-          </button>
-          <button onClick={() => onModeChange("edit")} className="flex-1 py-2.5 rounded-xl font-semibold text-sm"
-            style={{ background: "var(--amber)", color: "#fff" }}>
-            編集
-          </button>
-        </div>
-      )}
     </div>
   );
 }

@@ -194,7 +194,7 @@ export default function ContentList({ contents, books, genres, allContents, onUp
           editing={editing}
           onClose={() => setEditing(null)}
           onSave={async () => {}}
-          onUpdate={async (pageId, data) => { await onUpdate(pageId, data); setEditing(null); }}
+          onUpdate={async (pageId, data, keepOpen) => { await onUpdate(pageId, data); if (!keepOpen) setEditing(null); }}
         />
       )}
     </div>
