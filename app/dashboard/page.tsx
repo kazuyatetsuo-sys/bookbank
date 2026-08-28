@@ -2,8 +2,9 @@
 import { Suspense, useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { useBookBank, Content, Book } from "@/hooks/useBookBank";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import ContentModal from "@/components/contents/ContentModal";
-import DetailModal from "@/components/contents/DetailModal";
+import ContentPanel, { PanelMode } from "@/components/contents/ContentPanel";
 import BookList from "@/components/books/BookList";
 import SortPage from "@/components/contents/SortPage";
 import SettingsPage from "@/components/contents/SettingsPage";
@@ -24,10 +25,13 @@ function Dashboard() {
   const [tab, setTab] = useState<Tab>(() => (searchParams.get("book") || searchParams.get("content")) ? "books" : "random");
   const [showAdd, setShowAdd] = useState(false);
   const [historyDetail, setHistoryDetail] = useState<Content | null>(null);
-  const [editingContent, setEditingContent] = useState<Content | null>(null);
+  const [historyPanelMode, setHistoryPanelMode] = useState<PanelMode>("view");
   const [randomContents, setRandomContents] = useState<Content[]>([]);
+  const [randomDetail, setRandomDetail] = useState<Content | null>(null);
+  const [randomPanelMode, setRandomPanelMode] = useState<PanelMode>("view");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const isDesktop = useMediaQuery("(min-width: 768px)");
 
   const activeContents = bank.contents.filter(c => !c.archived);
 
@@ -35,10 +39,15 @@ function Dashboard() {
     if (!activeContents.length) return;
     if (activeContents.length === 1) {
       setRandomContents([activeContents[0]]);
+      setRandomDetail(activeContents[0]);
+      setRandomPanelMode("view");
       return;
     }
     const shuffled = [...activeContents].sort(() => Math.random() - 0.5);
-    setRandomContents(shuffled.slice(0, 2));
+    const picked = shuffled.slice(0, 2);
+    setRandomContents(picked);
+    setRandomDetail(picked[0] ?? null);
+    setRandomPanelMode("view");
   }, [activeContents]);
 
   useEffect(() => {
@@ -62,9 +71,92 @@ function Dashboard() {
 
   const goToBook = (book: Book) => {
     setHistoryDetail(null);
+    setRandomDetail(null);
     setTab("books");
     setSelectedBook(book);
   };
+
+  const historyListView = (
+    <div className="space-y-3">
+      <p className="text-xs" style={{ color: "var(--text-faint)" }}>{filteredHistory.length}件</p>
+      <div className="relative">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: "var(--text-faint)" }}>🔍</span>
+        <input className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm border focus:outline-none"
+          style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text)" }}
+          placeholder="検索…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+      </div>
+      {filteredHistory.map(c => (
+        <button key={c.id} onClick={() => { setHistoryDetail(c); setHistoryPanelMode("view"); }}
+          className="w-full text-left px-4 py-3.5 rounded-xl transition hover:opacity-80 border"
+          style={{ background: "var(--bg2)", borderColor: historyDetail?.id === c.id ? "var(--amber)" : "var(--border)" }}>
+          <p className="text-sm leading-snug mb-1.5 line-clamp-2 whitespace-pre-wrap" style={{ color: "var(--text)" }}>{c.contents || c.title}</p>
+          {c.memo && <p className="text-xs line-clamp-1" style={{ color: "var(--text-muted)" }}>{c.memo}</p>}
+          {c.tags.length > 0 && (
+            <div className="flex gap-1 mt-2 flex-wrap">
+              {c.tags.slice(0, 3).map(t => (
+                <span key={t} className="px-2 py-0.5 rounded-full text-xs border"
+                  style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{t}</span>
+              ))}
+            </div>
+          )}
+        </button>
+      ))}
+      {filteredHistory.length === 0 && <p className="text-center py-16 text-sm" style={{ color: "var(--text-faint)" }}>コンテンツがありません</p>}
+    </div>
+  );
+
+  const historyPanel = (fullHeight: boolean) => (
+    <ContentPanel fullHeight={fullHeight} content={historyDetail} mode={historyPanelMode}
+      books={bank.books} genres={bank.genres} allContents={bank.contents}
+      onModeChange={setHistoryPanelMode}
+      onUpdate={async (pageId, data) => {
+        await bank.updateContent(pageId, data);
+        setHistoryDetail(prev => prev && prev.id === pageId ? { ...prev, ...data } as Content : prev);
+      }}
+      onArchive={async (pageId, archived) => {
+        await bank.archiveContent(pageId, archived);
+        setHistoryDetail(prev => prev && prev.id === pageId ? { ...prev, archived } : prev);
+      }}
+      onBookClick={goToBook} />
+  );
+
+  const randomListView = (
+    <div className="space-y-3">
+      <p className="text-xs" style={{ color: "var(--text-faint)" }}>{activeContents.length}件からランダム</p>
+      {randomContents.map(rc => (
+        <button key={rc.id} onClick={() => { setRandomDetail(rc); setRandomPanelMode("view"); }}
+          className="w-full text-left px-4 py-3.5 rounded-xl transition hover:opacity-80 border"
+          style={{ background: "var(--bg2)", borderColor: randomDetail?.id === rc.id ? "var(--amber)" : "var(--border)" }}>
+          <p className="text-xs mb-1.5" style={{ color: "var(--amber)" }}>{rc.bookTitle} · Ch.{p(rc.chapter)} · HL.{p(rc.headline)} · #{rc.order}</p>
+          <p className="text-sm leading-snug line-clamp-3 whitespace-pre-wrap" style={{ color: "var(--text)" }}>{rc.contents}</p>
+          {rc.tags.length > 0 && (
+            <div className="flex gap-1 mt-2 flex-wrap">
+              {rc.tags.slice(0, 3).map(t => (
+                <span key={t} className="px-2 py-0.5 rounded-full text-xs border"
+                  style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{t}</span>
+              ))}
+            </div>
+          )}
+        </button>
+      ))}
+      {randomContents.length === 0 && <p className="text-center py-16 text-sm" style={{ color: "var(--text-faint)" }}>コンテンツがありません</p>}
+    </div>
+  );
+
+  const randomPanel = (fullHeight: boolean) => (
+    <ContentPanel fullHeight={fullHeight} content={randomDetail} mode={randomPanelMode}
+      books={bank.books} genres={bank.genres} allContents={bank.contents}
+      onModeChange={setRandomPanelMode}
+      onUpdate={async (pageId, data) => {
+        await bank.updateContent(pageId, data);
+        setRandomDetail(prev => prev && prev.id === pageId ? { ...prev, ...data } as Content : prev);
+      }}
+      onArchive={async (pageId, archived) => {
+        await bank.archiveContent(pageId, archived);
+        setRandomDetail(prev => prev && prev.id === pageId ? { ...prev, archived } : prev);
+      }}
+      onBookClick={goToBook} />
+  );
 
   return (
     <div className="min-h-screen" style={{ background: "var(--bg)", color: "var(--text)" }}>
@@ -91,34 +183,23 @@ function Dashboard() {
         </div>
       </nav>
 
-      <main className={`mx-auto px-4 py-5 pb-24 ${tab === "books" ? "max-w-2xl md:max-w-none" : "max-w-2xl"}`}>
+      <main className={`mx-auto px-4 py-5 pb-24 ${tab === "books" || tab === "history" || tab === "random" ? "max-w-2xl md:max-w-none" : "max-w-2xl"}`}>
         {tab === "history" && (
-          <div className="space-y-3">
-            <p className="text-xs" style={{ color: "var(--text-faint)" }}>{filteredHistory.length}件</p>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: "var(--text-faint)" }}>🔍</span>
-              <input className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm border focus:outline-none"
-                style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text)" }}
-                placeholder="検索…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+          isDesktop ? (
+            <div className="flex" style={{ height: "75vh" }}>
+              <div className="w-1/2 min-w-0 overflow-y-auto overscroll-contain border-r py-1 pr-4" style={{ borderColor: "var(--border)" }}>
+                {historyListView}
+              </div>
+              <div className="w-1/2 min-w-0 pl-4">{historyPanel(true)}</div>
             </div>
-            {filteredHistory.map(c => (
-              <button key={c.id} onClick={() => setHistoryDetail(c)}
-                className="w-full text-left px-4 py-3.5 rounded-xl transition hover:opacity-80 border"
-                style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
-                <p className="text-sm leading-snug mb-1.5 line-clamp-2 whitespace-pre-wrap" style={{ color: "var(--text)" }}>{c.contents || c.title}</p>
-                {c.memo && <p className="text-xs line-clamp-1" style={{ color: "var(--text-muted)" }}>{c.memo}</p>}
-                {c.tags.length > 0 && (
-                  <div className="flex gap-1 mt-2 flex-wrap">
-                    {c.tags.slice(0, 3).map(t => (
-                      <span key={t} className="px-2 py-0.5 rounded-full text-xs border"
-                        style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{t}</span>
-                    ))}
-                  </div>
-                )}
+          ) : historyDetail ? (
+            <div>
+              <button onClick={() => setHistoryDetail(null)} className="flex items-center gap-1 text-sm mb-3" style={{ color: "var(--text-muted)" }}>
+                ← 戻る
               </button>
-            ))}
-            {filteredHistory.length === 0 && <p className="text-center py-16 text-sm" style={{ color: "var(--text-faint)" }}>コンテンツがありません</p>}
-          </div>
+              {historyPanel(false)}
+            </div>
+          ) : historyListView
         )}
 
         {tab === "books" && (
@@ -130,40 +211,21 @@ function Dashboard() {
         )}
 
         {tab === "random" && (
-          <div className="space-y-4">
-            <p className="text-xs" style={{ color: "var(--text-faint)" }}>{activeContents.length}件からランダム</p>
-            {randomContents.map(rc => (
-              <div key={rc.id} className="rounded-2xl border overflow-hidden" style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
-                <div className="p-5">
-                  <p className="text-xs mb-2" style={{ color: "var(--amber)" }}>
-                    {rc.bookTitle} · Ch.{p(rc.chapter)} · HL.{p(rc.headline)} · #{rc.order}
-                  </p>
-                  <p className="text-base leading-relaxed mb-3 whitespace-pre-wrap" style={{ color: "var(--text)" }}>{rc.contents}</p>
-                  {rc.detail && (
-                    <p className="text-sm leading-relaxed mb-3 whitespace-pre-wrap" style={{ color: "var(--text-muted)" }}>{rc.detail}</p>
-                  )}
-                  {rc.tags.length > 0 && (
-                    <div className="flex gap-1 flex-wrap">
-                      {rc.tags.map(t => (
-                        <span key={t} className="px-2 py-0.5 rounded-full text-xs border"
-                          style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{t}</span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                {rc.memo && (
-                  <div className="px-5 pb-4 border-t pt-4" style={{ borderColor: "var(--border)" }}>
-                    <p className="text-xs mb-1" style={{ color: "var(--text-faint)" }}>メモ</p>
-                    <p className="text-sm whitespace-pre-wrap" style={{ color: "var(--text-muted)" }}>{rc.memo}</p>
-                  </div>
-                )}
-                <div className="flex items-center justify-end px-5 py-3 border-t" style={{ borderColor: "var(--border)" }}>
-                  <button onClick={() => setHistoryDetail(rc)} className="text-xs" style={{ color: "var(--amber)" }}>詳細を見る</button>
-                </div>
+          isDesktop ? (
+            <div className="flex" style={{ height: "75vh" }}>
+              <div className="w-1/2 min-w-0 overflow-y-auto overscroll-contain border-r py-1 pr-4" style={{ borderColor: "var(--border)" }}>
+                {randomListView}
               </div>
-            ))}
-            {randomContents.length === 0 && <p className="text-center py-16 text-sm" style={{ color: "var(--text-faint)" }}>コンテンツがありません</p>}
-          </div>
+              <div className="w-1/2 min-w-0 pl-4">{randomPanel(true)}</div>
+            </div>
+          ) : randomDetail ? (
+            <div>
+              <button onClick={() => setRandomDetail(null)} className="flex items-center gap-1 text-sm mb-3" style={{ color: "var(--text-muted)" }}>
+                ← 戻る
+              </button>
+              {randomPanel(false)}
+            </div>
+          ) : randomListView
         )}
 
         {tab === "sortlist" && (
@@ -189,19 +251,6 @@ function Dashboard() {
         <ContentModal books={bank.books} genres={bank.genres} allContents={bank.contents}
           onClose={() => setShowAdd(false)}
           onSave={async (data) => { await bank.addContent(data); }} />
-      )}
-      {editingContent && (
-        <ContentModal books={bank.books} genres={bank.genres} allContents={bank.contents} editing={editingContent}
-          onClose={() => setEditingContent(null)}
-          onSave={async (data) => { await bank.addContent(data); }}
-          onUpdate={async (pageId, data, keepOpen) => { await bank.updateContent(pageId, data); if (!keepOpen) setEditingContent(null); }} />
-      )}
-      {historyDetail && (
-        <DetailModal content={historyDetail} books={bank.books} allContents={bank.contents}
-          onClose={() => setHistoryDetail(null)}
-          onEdit={() => { setEditingContent(historyDetail); setHistoryDetail(null); }}
-          onArchive={() => { bank.archiveContent(historyDetail.id, !historyDetail.archived); setHistoryDetail(null); }}
-          onBookClick={goToBook} />
       )}
     </div>
   );
