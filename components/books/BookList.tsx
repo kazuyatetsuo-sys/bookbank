@@ -356,6 +356,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
   const [openChapters, setOpenChapters] = useState<Record<number, boolean>>({});
   const [openHeadlines, setOpenHeadlines] = useState<Record<string, boolean>>({});
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
+  const [focusedBookIndex, setFocusedBookIndex] = useState<number>(-1);
   const [showAddContent, setShowAddContent] = useState(false);
   const [panelContent, setPanelContent] = useState<Content | null>(null);
   const [panelMode, setPanelMode] = useState<PanelMode>("view");
@@ -414,6 +415,30 @@ export default function BookList({ books, genres, contents = [], allContents, on
 
   const selectBookAndReset = (b: Book) => { setSelected(b); setOpenChapters({}); setOpenHeadlines({}); };
 
+  // 書籍一覧での↑↓キー選択
+  useEffect(() => {
+    if (selected) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+      const target = e.target as HTMLElement;
+      const tag = target.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable) return;
+      if (!displayBooks.length) return;
+      e.preventDefault();
+      setFocusedBookIndex(prev => {
+        const next = e.key === "ArrowDown" ? Math.min(prev + 1, displayBooks.length - 1) : Math.max(prev - 1, 0);
+        const b = displayBooks[next];
+        selectBookAndReset(b);
+        requestAnimationFrame(() => {
+          document.querySelector(`[data-row-key="book:${CSS.escape(b.id)}"]`)?.scrollIntoView({ block: "nearest" });
+        });
+        return next;
+      });
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selected, displayBooks]);
+
   // URLの book/content パラメータから初期表示を復元(直接アクセス・共有用)
   useEffect(() => {
     if (urlInitialized.current) return;
@@ -468,12 +493,16 @@ export default function BookList({ books, genres, contents = [], allContents, on
       </div>
 
       {/* 書籍一覧 */}
-      <div className="space-y-2">
-        {!selectedGenre && <p className="text-xs" style={{ color: "var(--text-faint)" }}>新しい順</p>}
-        {displayBooks.map(b => (
-          <div key={b.id} onClick={() => selectBookAndReset(b)}
-            className="flex gap-3 items-center px-4 py-3 rounded-xl border cursor-pointer transition hover:opacity-80"
-            style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
+      <div>
+        {!selectedGenre && <p className="text-xs mb-2" style={{ color: "var(--text-faint)" }}>新しい順</p>}
+        {displayBooks.map((b, i) => (
+          <div key={b.id} data-row-key={`book:${b.id}`}
+            onClick={() => { setFocusedBookIndex(i); selectBookAndReset(b); }}
+            className="flex gap-3 items-center pl-3 pr-1 py-3 cursor-pointer transition hover:opacity-70"
+            style={{
+              borderLeft: focusedBookIndex === i ? "3px solid var(--amber)" : "3px solid transparent",
+              borderBottom: "1px solid var(--border)",
+            }}>
             {b.coverUrl
               ? <img src={b.coverUrl} alt="" className="w-10 h-14 object-cover rounded-lg flex-shrink-0" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
               : <div className="w-10 h-14 rounded-lg flex-shrink-0 flex items-center justify-center text-lg" style={{ background: "var(--amber-bg)", color: "var(--amber)" }}>📖</div>
