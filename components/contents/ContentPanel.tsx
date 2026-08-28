@@ -303,8 +303,6 @@ export default function ContentPanel({ content, mode, books, genres, allContents
       )}
 
       <div className="p-5 space-y-4">
-        <p className="text-base font-medium leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{cur.contents}</p>
-
         <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
           <button
             onClick={() => book && onBookClick?.(book)}
@@ -340,6 +338,8 @@ export default function ContentPanel({ content, mode, books, genres, allContents
             </>
           )}
         </div>
+
+        <p className="text-base font-medium leading-relaxed whitespace-pre-wrap" style={{ color: "var(--text)" }}>{cur.contents}</p>
 
         {cur.imageUrl && (
           <img src={cur.imageUrl} alt="" className="w-full rounded-xl object-cover max-h-64 border"
