@@ -140,7 +140,7 @@ function HeadlineList({ headlines, onChange }: { headlines: HeadlineEntry[]; onC
 }
 
 function BookContentTree({
-  book, contents, openChapters, setOpenChapters, openHeadlines, setOpenHeadlines, onSelectContent, selectedContentId, enableKeyboardNav,
+  book, contents, openChapters, setOpenChapters, openHeadlines, setOpenHeadlines, onSelectContent, selectedContentId, enableKeyboardNav, onBack,
 }: {
   book: Book;
   contents: Content[];
@@ -151,6 +151,7 @@ function BookContentTree({
   onSelectContent: (c: Content) => void;
   selectedContentId?: string;
   enableKeyboardNav?: boolean;
+  onBack?: () => void;
 }) {
   const bc = contents.filter(c => !c.archived && c.bookId === book.bookId)
     .sort((a, b) => a.chapter - b.chapter || a.headline - b.headline || (a.order != null && b.order != null ? a.order - b.order : a.order != null ? -1 : b.order != null ? 1 : new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()));
@@ -159,6 +160,20 @@ function BookContentTree({
   parseChapterTitles(book.chapterTitles || "").forEach(e => { chapterTitleMap[e.num] = e.title; });
   const headlineTitleMap: Record<string, string> = {};
   parseHeadlineTitles(book.headlineTitles || "").forEach(e => { headlineTitleMap[`${e.ch}-${e.hl}`] = e.title; });
+
+  // Chapterを閉じる際は配下のHLも合わせて閉じる
+  const closeChapterHeadlines = (ch: number) => {
+    setOpenHeadlines(prev => {
+      const next = { ...prev };
+      Object.keys(next).forEach(k => { if (k.startsWith(`${ch}-`)) delete next[k]; });
+      return next;
+    });
+  };
+  const toggleChapter = (ch: number) => {
+    const willOpen = !openChapters[ch];
+    if (!willOpen) closeChapterHeadlines(ch);
+    setOpenChapters(prev => ({ ...prev, [ch]: willOpen }));
+  };
 
   const [focusedRowKey, setFocusedRowKey] = useState<string | null>(selectedContentId ? `c:${selectedContentId}` : null);
   useEffect(() => {
@@ -199,12 +214,11 @@ function BookContentTree({
       const curIdx = focusedRowKey ? rows.findIndex(r => rowKey(r) === focusedRowKey) : -1;
       e.preventDefault();
 
-      // ↑↓: 現在表示中の行の間を1つずつ移動（折りたたまれた中へは踏み込まない）
+      // ↑↓: 現在表示中の行の間を1つずつ移動するだけ（折りたたまれた中へは踏み込まない）。選択の確定は→キーのみ
       if (e.key === "ArrowDown" || e.key === "ArrowUp") {
         const nextIdx = curIdx < 0 ? 0 : e.key === "ArrowDown" ? Math.min(curIdx + 1, rows.length - 1) : Math.max(curIdx - 1, 0);
         const next = rows[nextIdx];
         setFocusedRowKey(rowKey(next));
-        if (next.type === "content") onSelectContent(next.content);
         scrollRowIntoView(rowKey(next));
         return;
       }
@@ -227,10 +241,11 @@ function BookContentTree({
             const child = rows[curIdx + 1];
             if (child?.type === "content" && child.content.chapter === row.ch && child.content.headline === row.hl) {
               setFocusedRowKey(rowKey(child));
-              onSelectContent(child.content);
               scrollRowIntoView(rowKey(child));
             }
           }
+        } else if (row.type === "content") {
+          onSelectContent(row.content);
         }
       } else if (e.key === "ArrowLeft") {
         if (row.type === "hl") {
@@ -241,7 +256,8 @@ function BookContentTree({
             if (parent) { setFocusedRowKey(rowKey(parent)); scrollRowIntoView(rowKey(parent)); }
           }
         } else if (row.type === "chapter") {
-          if (openChapters[row.ch]) setOpenChapters(prev => ({ ...prev, [row.ch]: false }));
+          if (openChapters[row.ch]) toggleChapter(row.ch);
+          else onBack?.();
         } else if (row.type === "content") {
           const parentKey = `hl:${row.content.chapter}-${row.content.headline}`;
           if (rows.some(r => rowKey(r) === parentKey)) { setFocusedRowKey(parentKey); scrollRowIntoView(parentKey); }
@@ -250,7 +266,7 @@ function BookContentTree({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [enableKeyboardNav, rows, focusedRowKey, openChapters, openHeadlines, onSelectContent, setOpenChapters, setOpenHeadlines]);
+  }, [enableKeyboardNav, rows, focusedRowKey, openChapters, openHeadlines, onSelectContent, setOpenChapters, setOpenHeadlines, onBack]);
 
   if (!bc.length) return <p className="text-sm text-center py-8" style={{ color: "var(--text-faint)" }}>コンテンツがありません</p>;
   const rowAccent = (active: boolean) => ({
@@ -268,7 +284,7 @@ function BookContentTree({
         return (
           <div key={ch}>
             <button data-row-key={`ch:${ch}`}
-              onClick={() => { setFocusedRowKey(`ch:${ch}`); setOpenChapters(prev => ({ ...prev, [ch]: !prev[ch] })); }}
+              onClick={() => { setFocusedRowKey(`ch:${ch}`); toggleChapter(ch); }}
               className="w-full flex items-center gap-2 text-left pl-3 pr-1 py-3 transition hover:opacity-70"
               style={rowAccent(focusedRowKey === `ch:${ch}`)}>
               <span className="text-xs flex-shrink-0 w-3" style={{ color: "var(--text-faint)" }}>{isOpen ? "▼" : "▶"}</span>
@@ -415,17 +431,22 @@ export default function BookList({ books, genres, contents = [], allContents, on
 
   const selectBookAndReset = (b: Book) => { setSelected(b); setOpenChapters({}); setOpenHeadlines({}); };
 
-  // 書籍一覧での↑↓キー選択・Enterキーで決定
+  // 本を閉じたら(書籍一覧に戻ったら)Chapter/HLの開閉状態を全てリセット
+  useEffect(() => {
+    if (!selected) { setOpenChapters({}); setOpenHeadlines({}); }
+  }, [selected]);
+
+  // 書籍一覧での↑↓キー選択・Enter/→キーで決定
   useEffect(() => {
     if (selected) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "ArrowDown" && e.key !== "ArrowUp" && e.key !== "Enter") return;
+      if (e.key !== "ArrowDown" && e.key !== "ArrowUp" && e.key !== "Enter" && e.key !== "ArrowRight") return;
       const target = e.target as HTMLElement;
       const tag = target.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable) return;
       if (!displayBooks.length) return;
 
-      if (e.key === "Enter") {
+      if (e.key === "Enter" || e.key === "ArrowRight") {
         const b = focusedBookIndex >= 0 ? displayBooks[focusedBookIndex] : undefined;
         if (!b) return;
         e.preventDefault();
@@ -558,7 +579,8 @@ export default function BookList({ books, genres, contents = [], allContents, on
         openChapters={openChapters} setOpenChapters={setOpenChapters}
         openHeadlines={openHeadlines} setOpenHeadlines={setOpenHeadlines}
         onSelectContent={(c) => { setPanelContent(c); setPanelMode("view"); }}
-        selectedContentId={panelContent?.id} enableKeyboardNav />
+        selectedContentId={panelContent?.id} enableKeyboardNav
+        onBack={() => setSelected(null)} />
     </div>
   );
 

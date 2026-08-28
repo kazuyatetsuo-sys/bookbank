@@ -173,7 +173,7 @@ function Dashboard() {
       <nav className="sticky top-[49px] z-30 border-b overflow-x-auto" style={{ background: "var(--bg)", borderColor: "var(--border)" }}>
         <div className="max-w-2xl mx-auto flex">
           {tabs.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
+            <button key={t.id} onClick={() => { setTab(t.id); if (t.id === "books") setSelectedBook(null); }}
               className="flex-shrink-0 flex flex-col items-center gap-0.5 px-5 py-2.5 text-xs border-b-2 transition-all"
               style={tab === t.id ? { borderColor: "var(--amber)", color: "var(--amber)" } : { borderColor: "transparent", color: "var(--text-muted)" }}>
               <span className="text-base">{t.icon}</span>
