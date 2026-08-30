@@ -85,22 +85,27 @@ function Dashboard() {
           style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text)" }}
           placeholder="検索…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
       </div>
-      {filteredHistory.map(c => (
-        <button key={c.id} onClick={() => { setHistoryDetail(c); setHistoryPanelMode("view"); }}
-          className="w-full text-left px-4 py-3.5 rounded-xl transition hover:opacity-80 border"
-          style={{ background: "var(--bg2)", borderColor: historyDetail?.id === c.id ? "var(--amber)" : "var(--border)" }}>
-          <p className="text-sm leading-snug mb-1.5 line-clamp-2 whitespace-pre-wrap" style={{ color: "var(--text)" }}>{c.contents || c.title}</p>
-          {c.memo && <p className="text-xs line-clamp-1" style={{ color: "var(--text-muted)" }}>{c.memo}</p>}
-          {c.tags.length > 0 && (
-            <div className="flex gap-1 mt-2 flex-wrap">
-              {c.tags.slice(0, 3).map(t => (
-                <span key={t} className="px-2 py-0.5 rounded-full text-xs border"
-                  style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{t}</span>
-              ))}
-            </div>
-          )}
-        </button>
-      ))}
+      <div>
+        {filteredHistory.map(c => (
+          <button key={c.id} onClick={() => { setHistoryDetail(c); setHistoryPanelMode("view"); }}
+            className="w-full text-left pl-3 pr-1 py-3.5 transition hover:opacity-70"
+            style={{
+              borderLeft: historyDetail?.id === c.id ? "3px solid var(--amber)" : "3px solid transparent",
+              borderBottom: "1px solid var(--border)",
+            }}>
+            <p className="text-sm leading-snug mb-1.5 line-clamp-2 whitespace-pre-wrap" style={{ color: "var(--text)" }}>{c.contents || c.title}</p>
+            {c.memo && <p className="text-xs line-clamp-1" style={{ color: "var(--text-muted)" }}>{c.memo}</p>}
+            {c.tags.length > 0 && (
+              <div className="flex gap-1 mt-2 flex-wrap">
+                {c.tags.slice(0, 3).map(t => (
+                  <span key={t} className="px-2 py-0.5 rounded-full text-xs border"
+                    style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{t}</span>
+                ))}
+              </div>
+            )}
+          </button>
+        ))}
+      </div>
       {filteredHistory.length === 0 && <p className="text-center py-16 text-sm" style={{ color: "var(--text-faint)" }}>コンテンツがありません</p>}
     </div>
   );
@@ -124,22 +129,27 @@ function Dashboard() {
   const randomListView = (
     <div className="space-y-3">
       <p className="text-xs" style={{ color: "var(--text-faint)" }}>{activeContents.length}件からランダム</p>
-      {randomContents.map(rc => (
-        <button key={rc.id} onClick={() => { setRandomDetail(rc); setRandomPanelMode("view"); }}
-          className="w-full text-left px-4 py-3.5 rounded-xl transition hover:opacity-80 border"
-          style={{ background: "var(--bg2)", borderColor: randomDetail?.id === rc.id ? "var(--amber)" : "var(--border)" }}>
-          <p className="text-xs mb-1.5" style={{ color: "var(--amber)" }}>{rc.bookTitle} · Ch.{p(rc.chapter)} · HL.{p(rc.headline)} · #{rc.order}</p>
-          <p className="text-sm leading-snug line-clamp-3 whitespace-pre-wrap" style={{ color: "var(--text)" }}>{rc.contents}</p>
-          {rc.tags.length > 0 && (
-            <div className="flex gap-1 mt-2 flex-wrap">
-              {rc.tags.slice(0, 3).map(t => (
-                <span key={t} className="px-2 py-0.5 rounded-full text-xs border"
-                  style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{t}</span>
-              ))}
-            </div>
-          )}
-        </button>
-      ))}
+      <div>
+        {randomContents.map(rc => (
+          <button key={rc.id} onClick={() => { setRandomDetail(rc); setRandomPanelMode("view"); }}
+            className="w-full text-left pl-3 pr-1 py-3.5 transition hover:opacity-70"
+            style={{
+              borderLeft: randomDetail?.id === rc.id ? "3px solid var(--amber)" : "3px solid transparent",
+              borderBottom: "1px solid var(--border)",
+            }}>
+            <p className="text-xs mb-1.5" style={{ color: "var(--amber)" }}>{rc.bookTitle} · Ch.{p(rc.chapter)} · HL.{p(rc.headline)} · #{rc.order}</p>
+            <p className="text-sm leading-snug line-clamp-3 whitespace-pre-wrap" style={{ color: "var(--text)" }}>{rc.contents}</p>
+            {rc.tags.length > 0 && (
+              <div className="flex gap-1 mt-2 flex-wrap">
+                {rc.tags.slice(0, 3).map(t => (
+                  <span key={t} className="px-2 py-0.5 rounded-full text-xs border"
+                    style={{ background: "var(--amber-bg)", borderColor: "var(--amber-border)", color: "var(--amber)" }}>{t}</span>
+                ))}
+              </div>
+            )}
+          </button>
+        ))}
+      </div>
       {randomContents.length === 0 && <p className="text-center py-16 text-sm" style={{ color: "var(--text-faint)" }}>コンテンツがありません</p>}
     </div>
   );
