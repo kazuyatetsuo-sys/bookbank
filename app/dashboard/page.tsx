@@ -3,6 +3,7 @@ import { Suspense, useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { useBookBank, Content, Book } from "@/hooks/useBookBank";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useSwipeBack } from "@/hooks/useSwipeBack";
 import ContentModal from "@/components/contents/ContentModal";
 import ContentPanel, { PanelMode } from "@/components/contents/ContentPanel";
 import BookList from "@/components/books/BookList";
@@ -32,6 +33,8 @@ function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const isDesktop = useMediaQuery("(min-width: 768px)");
+  const historySwipeBack = useSwipeBack(() => setHistoryDetail(null));
+  const randomSwipeBack = useSwipeBack(() => setRandomDetail(null));
 
   const activeContents = bank.contents.filter(c => !c.archived);
 
@@ -205,7 +208,7 @@ function Dashboard() {
               <div className="w-1/2 min-w-0 pl-4">{historyPanel(true)}</div>
             </div>
           ) : historyDetail ? (
-            <div>
+            <div onTouchStart={historySwipeBack.onTouchStart} onTouchEnd={historySwipeBack.onTouchEnd}>
               <button onClick={() => setHistoryDetail(null)} className="flex items-center gap-1 text-sm mb-3" style={{ color: "var(--text-muted)" }}>
                 ← 戻る
               </button>
@@ -231,7 +234,7 @@ function Dashboard() {
               <div className="w-1/2 min-w-0 pl-4">{randomPanel(true)}</div>
             </div>
           ) : randomDetail ? (
-            <div>
+            <div onTouchStart={randomSwipeBack.onTouchStart} onTouchEnd={randomSwipeBack.onTouchEnd}>
               <button onClick={() => setRandomDetail(null)} className="flex items-center gap-1 text-sm mb-3" style={{ color: "var(--text-muted)" }}>
                 ← 戻る
               </button>

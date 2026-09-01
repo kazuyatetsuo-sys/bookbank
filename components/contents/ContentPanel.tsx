@@ -366,9 +366,9 @@ export default function ContentPanel({ content, mode, books, genres, allContents
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center gap-1 flex-shrink-0">
             <button onClick={() => navigateSibling(prevContent)} disabled={!prevContent} aria-label="前のコンテンツ" title="前のコンテンツ"
-              className="w-6 h-6 flex items-center justify-center rounded disabled:opacity-30" style={{ color: "var(--text-muted)" }}>‹</button>
+              className="w-11 h-11 flex items-center justify-center rounded-full text-2xl leading-none disabled:opacity-30 active:opacity-60" style={{ color: "var(--text-muted)" }}>‹</button>
             <button onClick={() => navigateSibling(nextContent)} disabled={!nextContent} aria-label="次のコンテンツ" title="次のコンテンツ"
-              className="w-6 h-6 flex items-center justify-center rounded disabled:opacity-30" style={{ color: "var(--text-muted)" }}>›</button>
+              className="w-11 h-11 flex items-center justify-center rounded-full text-2xl leading-none disabled:opacity-30 active:opacity-60" style={{ color: "var(--text-muted)" }}>›</button>
           </div>
 
           <button

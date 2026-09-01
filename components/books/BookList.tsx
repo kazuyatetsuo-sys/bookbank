@@ -5,6 +5,7 @@ import { Book, Content } from "@/hooks/useBookBank";
 import ContentModal from "@/components/contents/ContentModal";
 import ContentPanel, { PanelMode } from "@/components/contents/ContentPanel";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useSwipeBack } from "@/hooks/useSwipeBack";
 
 interface Props {
   books: Book[];
@@ -354,6 +355,7 @@ function BookContentTree({
 
 export default function BookList({ books, genres, contents = [], allContents, onAdd, onUpdate, onDelete, onUpdateContent, onArchiveContent, onAddContent, selectedBook, onSelectBook }: Props) {
   const isDesktop = useMediaQuery("(min-width: 768px)");
+  const panelSwipeBack = useSwipeBack(() => setPanelContent(null));
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ ...emptyForm });
   const [chapters, setChapters] = useState<ChapterEntry[]>([]);
@@ -454,6 +456,9 @@ export default function BookList({ books, genres, contents = [], allContents, on
     const bookContents = contents.filter(c => !c.archived && c.bookId === b.bookId);
     if (!bookContents.length) return;
     const pick = bookContents[Math.floor(Math.random() * bookContents.length)];
+    selectBookAndReset(b);
+    setOpenChapters(prev => ({ ...prev, [pick.chapter]: true }));
+    setOpenHeadlines(prev => ({ ...prev, [`${pick.chapter}-${pick.headline}`]: true }));
     setPanelContent(pick);
     setPanelMode("view");
   };
@@ -650,7 +655,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
           </div>
         </div>
       ) : panelContent ? (
-        <div>
+        <div onTouchStart={panelSwipeBack.onTouchStart} onTouchEnd={panelSwipeBack.onTouchEnd}>
           <button onClick={() => setPanelContent(null)} className="flex items-center gap-1 text-sm mb-3" style={{ color: "var(--text-muted)" }}>
             ← 戻る
           </button>
