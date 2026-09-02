@@ -655,7 +655,7 @@ export default function BookList({ books, genres, contents = [], allContents, on
           </div>
         </div>
       ) : panelContent ? (
-        <div onTouchStart={panelSwipeBack.onTouchStart} onTouchEnd={panelSwipeBack.onTouchEnd}>
+        <div className="min-h-[75vh]" onTouchStart={panelSwipeBack.onTouchStart} onTouchEnd={panelSwipeBack.onTouchEnd} onTouchCancel={panelSwipeBack.onTouchCancel}>
           <button onClick={() => setPanelContent(null)} className="flex items-center gap-1 text-sm mb-3" style={{ color: "var(--text-muted)" }}>
             ← 戻る
           </button>

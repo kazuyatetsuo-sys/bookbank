@@ -208,7 +208,7 @@ function Dashboard() {
               <div className="w-1/2 min-w-0 pl-4">{historyPanel(true)}</div>
             </div>
           ) : historyDetail ? (
-            <div onTouchStart={historySwipeBack.onTouchStart} onTouchEnd={historySwipeBack.onTouchEnd}>
+            <div className="min-h-[75vh]" onTouchStart={historySwipeBack.onTouchStart} onTouchEnd={historySwipeBack.onTouchEnd} onTouchCancel={historySwipeBack.onTouchCancel}>
               <button onClick={() => setHistoryDetail(null)} className="flex items-center gap-1 text-sm mb-3" style={{ color: "var(--text-muted)" }}>
                 ← 戻る
               </button>
@@ -234,7 +234,7 @@ function Dashboard() {
               <div className="w-1/2 min-w-0 pl-4">{randomPanel(true)}</div>
             </div>
           ) : randomDetail ? (
-            <div onTouchStart={randomSwipeBack.onTouchStart} onTouchEnd={randomSwipeBack.onTouchEnd}>
+            <div className="min-h-[75vh]" onTouchStart={randomSwipeBack.onTouchStart} onTouchEnd={randomSwipeBack.onTouchEnd} onTouchCancel={randomSwipeBack.onTouchCancel}>
               <button onClick={() => setRandomDetail(null)} className="flex items-center gap-1 text-sm mb-3" style={{ color: "var(--text-muted)" }}>
                 ← 戻る
               </button>
