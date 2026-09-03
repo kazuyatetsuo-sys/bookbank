@@ -63,6 +63,29 @@ function Dashboard() {
     !searchQuery || c.contents.includes(searchQuery) || c.bookTitle.includes(searchQuery) || c.memo.includes(searchQuery)
   );
 
+  // Historyタブでの↑↓キーによる選択移動
+  useEffect(() => {
+    if (tab !== "history") return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+      const target = e.target as HTMLElement;
+      const tag = target.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable) return;
+      if (!filteredHistory.length) return;
+      e.preventDefault();
+      const curIdx = historyDetail ? filteredHistory.findIndex(c => c.id === historyDetail.id) : -1;
+      const nextIdx = e.key === "ArrowDown" ? Math.min(curIdx + 1, filteredHistory.length - 1) : Math.max(curIdx - 1, 0);
+      const next = filteredHistory[nextIdx];
+      setHistoryDetail(next);
+      setHistoryPanelMode("view");
+      requestAnimationFrame(() => {
+        document.querySelector(`[data-row-key="history:${CSS.escape(next.id)}"]`)?.scrollIntoView({ block: "nearest" });
+      });
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [tab, filteredHistory, historyDetail]);
+
   const tabs = [
     { id: "history" as Tab,  label: "History",   icon: "🕐" },
     { id: "books" as Tab,    label: "Books",     icon: "📚" },
@@ -90,7 +113,8 @@ function Dashboard() {
       </div>
       <div>
         {filteredHistory.map(c => (
-          <button key={c.id} onClick={() => { setHistoryDetail(c); setHistoryPanelMode("view"); }}
+          <button key={c.id} data-row-key={`history:${c.id}`}
+            onClick={() => { setHistoryDetail(c); setHistoryPanelMode("view"); }}
             className="w-full text-left pl-3 pr-1 py-3.5 transition hover:opacity-70"
             style={{
               borderLeft: historyDetail?.id === c.id ? "3px solid var(--amber)" : "3px solid transparent",
